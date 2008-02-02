@@ -39,6 +39,7 @@ public class GameLibrarian {
             String title = null;
             String version = null;
 
+            if (authors == null) return;
             for (int n = 0; n < authors.size(); n++) {
                 author = (String) authors.get(n);
                 File root = new File(author);
@@ -47,11 +48,13 @@ public class GameLibrarian {
                 System.out.println("Author :"+ author);
 
                 File[] titles = root.listFiles();
+                if (titles == null) return;
                 for (int j = 0; j < titles.length; j++) {
                     title = titles[j].getName();
                     System.out.println("Title :"+ title);
 
                     File[] versions = titles[j].listFiles();
+                    if (versions == null) return;
                     for (int k = 0; k < versions.length; k++) {
                         version = versions[k].getName();
                          System.out.println("Version :"+ version);

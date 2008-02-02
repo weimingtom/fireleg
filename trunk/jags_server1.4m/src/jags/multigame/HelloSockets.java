@@ -43,8 +43,8 @@ public class HelloSockets implements IDie{
     
     private ArrayList <jags.multigame.Connection> games = new ArrayList();    
     
-    public int timeToLive = 60;
-    public static int portNumber = 81;
+    public int timeToLive = 10;
+    public static int portNumber = 82;
     
     public GameState state = new GameState();
     

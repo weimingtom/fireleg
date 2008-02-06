@@ -39,7 +39,9 @@ public class GameLibrarian {
             String title = null;
             String version = null;
 
+            System.out.println("LoadTitlesFromDisk debug 101");
             if (authors == null) return;
+            
             for (int n = 0; n < authors.size(); n++) {
                 author = (String) authors.get(n);
                 File root = new File(author);
@@ -47,8 +49,10 @@ public class GameLibrarian {
                 System.out.println("Abs Path = " + root.getAbsolutePath());
                 System.out.println("Author :"+ author);
 
+                if (root == null) return;
                 File[] titles = root.listFiles();
                 if (titles == null) return;
+                
                 for (int j = 0; j < titles.length; j++) {
                     title = titles[j].getName();
                     System.out.println("Title :"+ title);
@@ -66,7 +70,7 @@ public class GameLibrarian {
             }
             
         } catch (Exception ex) {
-            System.out.println("loadTitlesFromDisk "+ ex);
+            System.out.println("Function loadTitlesFromDisk "+ ex);
             Logger.getLogger(HelloSockets.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

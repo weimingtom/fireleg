@@ -39,8 +39,8 @@ import java.util.logging.Logger;
 public class HelloSockets implements IDie{
     private ArrayList <jags.multigame.Connection> connections = new ArrayList();   
     private Broadcaster broadcaster = new Broadcaster(connections);    
-    public GameLibrarian librarian = new GameLibrarian();
     
+    public GameLibrarian librarian = new GameLibrarian();
     private ArrayList <jags.multigame.Connection> games = new ArrayList();    
     
     public int timeToLive = 10;
@@ -61,7 +61,7 @@ public class HelloSockets implements IDie{
             
             int count = 0;
             
-            Trace.out("\nLISTENING on PORT "+ portNumber);
+            System.out.println("\nLISTENING on PORT "+ portNumber);
             while(true) {
                 //Trace.out("\n READY: "+ count +"\n");
                 clientSock = serverSock.accept();
@@ -123,6 +123,10 @@ public class HelloSockets implements IDie{
     
     // allows connections to let this class manage the death of connections
     public void die(Connection conn) {
+        // Game level
+        conn.gameTitle.unregisterConnection(conn);
+        
+        // Server level
     	broadcaster.removeHost(conn);
         connections.remove(conn);
         conn.kill();

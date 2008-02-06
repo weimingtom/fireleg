@@ -213,10 +213,7 @@ public class Connection extends Thread {
         // send it to the dynamically selected Gamestate
         // this gives your game a chance to alter the message,
         // and correct recipients.
-        //
-        // TODO: change this to GameTitle so people can inject code 
-        // into classes that are not compiled with this server.
-        //state.doAction(message);        
+       
         if (gameTitle != null && gameTitle.IGame != null) gameTitle.IGame.doAction(message);
         
         //Trace.out(message.toString());

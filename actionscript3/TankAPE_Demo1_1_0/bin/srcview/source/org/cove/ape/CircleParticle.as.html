@@ -1,0 +1,165 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>CircleParticle.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asComment">/*
+Copyright (c) 2006, 2007 Alec Cove
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/</span>
+
+<span class="asComment">/* 
+TODO:
+- getProjection() needs review for any possibility of precomputing
+*/</span>
+
+<span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+    
+    <span class="asReserved">import</span> flash.display.Sprite;
+    <span class="asReserved">import</span> flash.utils.<span class="asOperator">*</span>;
+    
+    <span class="asDoc">/**    
+     * A circle shaped particle.      
+     */</span>
+    <span class="asReserved">public</span> <span class="asClass">class</span> CircleParticle <span class="asReserved">extends</span> AbstractParticle <span class="asReserved">implements</span> IExternalizable <span class="asBracket">{</span>
+    
+        <span class="asReserved">private</span> <span class="asVar">var</span> _radius<span class="asOperator">:</span>Number;
+        
+        
+        <span class="asDoc">/**
+         * @param x The initial x position of this particle.
+         * @param y The initial y position of this particle.
+         * @param radius The radius of this particle.
+         * @param fixed Determines if the particle is fixed or not. Fixed particles
+         * are not affected by forces or collisions and are good to use as surfaces.
+         * Non-fixed particles move freely in response to collision and forces.
+         * @param mass The mass of the particle.
+         * @param elasticity The elasticity of the particle. Higher values mean more elasticity or &apos;bounciness&apos;.
+         * @param friction The surface friction of the particle.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> CircleParticle <span class="asBracket">(</span>
+                x<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0, 
+                y<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0, 
+                radius<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0, 
+                fixed<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span>,
+                mass<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1, 
+                elasticity<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0.3,
+                friction<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0<span class="asBracket">)</span> <span class="asBracket">{</span>
+                    
+            <span class="asReserved">super</span><span class="asBracket">(</span>x, y, fixed, mass, elasticity, friction<span class="asBracket">)</span>;
+            _radius <span class="asOperator">=</span> radius;
+        <span class="asBracket">}</span>
+
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> writeExternal<span class="asBracket">(</span>output<span class="asOperator">:</span>IDataOutput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span>.writeExternal<span class="asBracket">(</span>output<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>_radius<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+          
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> readExternal<span class="asBracket">(</span>input<span class="asOperator">:</span>IDataInput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>  
+            <span class="asReserved">super</span>.readExternal<span class="asBracket">(</span>input<span class="asBracket">)</span>;
+            _radius <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+        <span class="asBracket">}</span>
+
+        <span class="asDoc">/**
+         * The radius of the particle.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> radius<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _radius;
+        <span class="asBracket">}</span>        
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> radius<span class="asBracket">(</span>r<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _radius <span class="asOperator">=</span> r;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Sets up the visual representation of this CircleParticle. This method is called 
+         * automatically when an instance of this CircleParticle&apos;s parent Group is added to 
+         * the APEngine, when  this CircleParticle&apos;s Composite is added to a Group, or the 
+         * CircleParticle is added to a Composite or Group.
+         */</span>        
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> init<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            cleanup<span class="asBracket">()</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>displayObject <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                initDisplay<span class="asBracket">()</span>;
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asBracket">{</span>
+                sprite.graphics.clear<span class="asBracket">()</span>;
+                sprite.graphics.lineStyle<span class="asBracket">(</span>lineThickness, lineColor, lineAlpha<span class="asBracket">)</span>;
+                sprite.graphics.beginFill<span class="asBracket">(</span>fillColor, fillAlpha<span class="asBracket">)</span>;
+                sprite.graphics.drawCircle<span class="asBracket">(</span>0, 0, radius<span class="asBracket">)</span>;
+                sprite.graphics.endFill<span class="asBracket">()</span>;
+            <span class="asBracket">}</span>
+            paint<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * The default painting method for this particle. This method is called automatically
+         * by the &lt;code&gt;APEngine.paint()&lt;/code&gt; method. If you want to define your own custom painting
+         * method, then create a subclass of this class and override &lt;code&gt;paint()&lt;/code&gt;.
+         */</span>            
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> paint<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            sprite.x <span class="asOperator">=</span> curr.x;
+            sprite.y <span class="asOperator">=</span> curr.y;    
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> getProjection<span class="asBracket">(</span>axis<span class="asOperator">:</span>Vector<span class="asBracket">)</span><span class="asOperator">:</span>Interval <span class="asBracket">{</span>
+            <span class="asVar">var</span> c<span class="asOperator">:</span>Number <span class="asOperator">=</span> samp.dot<span class="asBracket">(</span>axis<span class="asBracket">)</span>;
+            interval.min <span class="asOperator">=</span> c <span class="asOperator">-</span> _radius;
+            interval.max <span class="asOperator">=</span> c <span class="asOperator">+</span> _radius;
+            
+            <span class="asReserved">return</span> interval;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> getIntervalX<span class="asBracket">()</span><span class="asOperator">:</span>Interval <span class="asBracket">{</span>
+            interval.min <span class="asOperator">=</span> samp.x <span class="asOperator">-</span> _radius;
+            interval.max <span class="asOperator">=</span> samp.x <span class="asOperator">+</span> _radius;
+            <span class="asReserved">return</span> interval;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>        
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> getIntervalY<span class="asBracket">()</span><span class="asOperator">:</span>Interval <span class="asBracket">{</span>
+            interval.min <span class="asOperator">=</span> samp.y <span class="asOperator">-</span> _radius;
+            interval.max <span class="asOperator">=</span> samp.y <span class="asOperator">+</span> _radius;
+            <span class="asReserved">return</span> interval;
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span>
+    
+    </pre></body>
+</html>

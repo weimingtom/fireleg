@@ -1,0 +1,83 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>CollisionResolver.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asComment">/*
+Copyright (c) 2006, 2007 Alec Cove
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/</span>
+
+<span class="asComment">/*
+TODO:
+- fix the friction bug for two non-fixed particles in collision. The tangental
+  component should not be scaled/applied in all instances, depending on the velocity
+  of the other colliding item
+*/</span>
+
+<span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+    
+    <span class="asComment">// thanks to Jim Bonacci for changes using the inverse mass instead of mass
+</span>    
+    <span class="asReserved">public</span> <span class="asReserved">final</span> <span class="asClass">class</span> CollisionResolver <span class="asBracket">{</span>
+        
+        <span class="asReserved">internal</span> <span class="asReserved">static</span> <span class="asFunction">function</span> resolve <span class="asBracket">(</span>pa<span class="asOperator">:</span>AbstractParticle, pb<span class="asOperator">:</span>AbstractParticle, 
+                normal<span class="asOperator">:</span>Vector, depth<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+         
+            <span class="asVar">var</span> mtd<span class="asOperator">:</span>Vector <span class="asOperator">=</span> normal.mult<span class="asBracket">(</span>depth<span class="asBracket">)</span>;           
+            <span class="asVar">var</span> te<span class="asOperator">:</span>Number <span class="asOperator">=</span> pa.elasticity <span class="asOperator">+</span> pb.elasticity;
+            <span class="asVar">var</span> sumInvMass<span class="asOperator">:</span>Number <span class="asOperator">=</span> pa.invMass <span class="asOperator">+</span> pb.invMass;
+            
+            <span class="asComment">// the total friction in a collision is combined but clamped to [0,1]
+</span>            <span class="asVar">var</span> tf<span class="asOperator">:</span>Number <span class="asOperator">=</span> MathUtil.clamp<span class="asBracket">(</span>1 <span class="asOperator">-</span> <span class="asBracket">(</span>pa.friction <span class="asOperator">+</span> pb.friction<span class="asBracket">)</span>, 0, 1<span class="asBracket">)</span>;
+            
+            <span class="asComment">// get the collision components, vn and vt
+</span>            <span class="asVar">var</span> ca<span class="asOperator">:</span>Collision <span class="asOperator">=</span> pa.getComponents<span class="asBracket">(</span>normal<span class="asBracket">)</span>;
+            <span class="asVar">var</span> cb<span class="asOperator">:</span>Collision <span class="asOperator">=</span> pb.getComponents<span class="asBracket">(</span>normal<span class="asBracket">)</span>;
+
+             <span class="asComment">// calculate the coefficient of restitution as the normal component
+</span>            <span class="asVar">var</span> vnA<span class="asOperator">:</span>Vector <span class="asOperator">=</span> <span class="asBracket">(</span>cb.vn.mult<span class="asBracket">((</span>te <span class="asOperator">+</span> 1<span class="asBracket">)</span> <span class="asOperator">*</span> pa.invMass<span class="asBracket">)</span>.plus<span class="asBracket">(</span>
+                    ca.vn.mult<span class="asBracket">(</span>pb.invMass <span class="asOperator">-</span> te <span class="asOperator">*</span> pa.invMass<span class="asBracket">)))</span>.divEquals<span class="asBracket">(</span>sumInvMass<span class="asBracket">)</span>;
+            <span class="asVar">var</span> vnB<span class="asOperator">:</span>Vector <span class="asOperator">=</span> <span class="asBracket">(</span>ca.vn.mult<span class="asBracket">((</span>te <span class="asOperator">+</span> 1<span class="asBracket">)</span> <span class="asOperator">*</span> pb.invMass<span class="asBracket">)</span>.plus<span class="asBracket">(</span>
+                    cb.vn.mult<span class="asBracket">(</span>pa.invMass <span class="asOperator">-</span> te <span class="asOperator">*</span> pb.invMass<span class="asBracket">)))</span>.divEquals<span class="asBracket">(</span>sumInvMass<span class="asBracket">)</span>;
+            
+            <span class="asComment">// apply friction to the tangental component
+</span>            ca.vt.multEquals<span class="asBracket">(</span>tf<span class="asBracket">)</span>;
+            cb.vt.multEquals<span class="asBracket">(</span>tf<span class="asBracket">)</span>;
+            
+            <span class="asComment">// scale the mtd by the ratio of the masses. heavier particles move less 
+</span>            <span class="asVar">var</span> mtdA<span class="asOperator">:</span>Vector <span class="asOperator">=</span> mtd.mult<span class="asBracket">(</span> pa.invMass <span class="asOperator">/</span> sumInvMass<span class="asBracket">)</span>;     
+            <span class="asVar">var</span> mtdB<span class="asOperator">:</span>Vector <span class="asOperator">=</span> mtd.mult<span class="asBracket">(</span><span class="asOperator">-</span>pb.invMass <span class="asOperator">/</span> sumInvMass<span class="asBracket">)</span>;
+            
+            <span class="asComment">// add the tangental component to the normal component for the new velocity 
+</span>            vnA.plusEquals<span class="asBracket">(</span>ca.vt<span class="asBracket">)</span>;
+            vnB.plusEquals<span class="asBracket">(</span>cb.vt<span class="asBracket">)</span>;
+           
+            pa.resolveCollision<span class="asBracket">(</span>mtdA, vnA, normal, depth, <span class="asOperator">-</span>1, pb<span class="asBracket">)</span>;
+            pb.resolveCollision<span class="asBracket">(</span>mtdB, vnB, normal, depth,  1, pa<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span>
+
+</pre></body>
+</html>

@@ -1,0 +1,334 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>Group.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asComment">/*
+Copyright (c) 2006, 2007 Alec Cove
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/</span>
+
+<span class="asComment">/*
+TODO:
+- should all getters for composites, particles, constraints arrays return
+  a copy of the array? do we want to give the user direct access to it?
+- addConstraintList, addParticleList
+- if get particles and get constraints returned members of the Groups composites
+  (as they probably should) the checkCollision methods would probably be much
+  cleaner.
+*/</span>
+
+<span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+
+    <span class="asReserved">import</span> flash.utils.<span class="asOperator">*</span>;
+        
+    <span class="asDoc">/**
+     * The Group class can contain Particles, Constraints, and Composites. Groups can be 
+     * assigned to be checked for collision with other Groups or internally. 
+     */</span> 
+    <span class="asReserved">public</span> <span class="asClass">class</span> Group <span class="asReserved">extends</span> AbstractCollection <span class="asReserved">implements</span> IExternalizable <span class="asBracket">{</span>
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> _composites<span class="asOperator">:</span>Array <span class="asOperator">=</span> <span class="asReserved">new</span> Array<span class="asBracket">()</span>;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _collisionList<span class="asOperator">:</span>Array <span class="asOperator">=</span> <span class="asReserved">new</span> Array<span class="asBracket">()</span>;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _collideInternal<span class="asOperator">:</span>Boolean;
+        
+        
+        <span class="asDoc">/**
+         * The Group class is the main organizational class for APE. Once groups are 
+         * created and populated with particles, constraints, and composites, they are 
+         * added to the APEngine. Groups may contain particles, constraints, and 
+         * composites. Composites may only contain particles and constraints.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> Group<span class="asBracket">(</span>collideInternal<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span><span class="asBracket">()</span>;
+            <span class="asComment">//_composites = new Array();
+</span>            <span class="asComment">//_collisionList = new Array();
+</span>            <span class="asReserved">this</span>.collideInternal <span class="asOperator">=</span> collideInternal;
+        <span class="asBracket">}</span>
+                
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> writeExternal<span class="asBracket">(</span>output<span class="asOperator">:</span>IDataOutput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span>.writeExternal<span class="asBracket">(</span>output<span class="asBracket">)</span>;
+<span class="asComment">//            if (_composites == null || _composites.length == 0) 
+</span><span class="asComment">//                output.writeObject(null);
+</span><span class="asComment">//            else {
+</span>                <span class="asComment">//TODO Travis output.write
+</span><span class="asComment">//                output.writeObject(_composites);
+</span><span class="asComment">//            }
+</span>            output.writeObject<span class="asBracket">(</span>_composites<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>_collisionList<span class="asBracket">)</span>;
+            output.writeBoolean<span class="asBracket">(</span>_collideInternal<span class="asBracket">)</span>;            
+        <span class="asBracket">}</span>
+          
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> readExternal<span class="asBracket">(</span>input<span class="asOperator">:</span>IDataInput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>  
+            <span class="asReserved">super</span>.readExternal<span class="asBracket">(</span>input<span class="asBracket">)</span>;
+            _composites <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Array;
+            _collisionList <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Array;
+            _collideInternal <span class="asOperator">=</span> input.readBoolean<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>    
+        
+        <span class="asDoc">/**
+         * Initializes every member of this Group by in turn calling each members 
+         * &lt;code&gt;init()&lt;/code&gt; method.
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> init<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asComment">//if (composites != null) {
+</span>                <span class="asReserved">super</span>.init<span class="asBracket">()</span>;
+                <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> composites.length; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    composites<span class="asBracket">[</span>i<span class="asBracket">]</span>.init<span class="asBracket">()</span>;    
+                <span class="asBracket">}</span>
+            <span class="asComment">//}
+</span>        <span class="asBracket">}</span>
+        
+
+        <span class="asDoc">/**
+         * Returns an Array containing all the Composites added to this Group
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> composites<span class="asBracket">()</span><span class="asOperator">:</span>Array <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _composites;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Adds a Composite to the Group.
+         * 
+         * @param c The Composite to be added.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> addComposite<span class="asBracket">(</span>c<span class="asOperator">:</span>Composite<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            composites.push<span class="asBracket">(</span>c<span class="asBracket">)</span>;
+            c.isParented <span class="asOperator">=</span> <span class="asReserved">true</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>isParented<span class="asBracket">)</span> c.init<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * Removes a Composite from the Group.
+         * 
+         * @param c The Composite to be removed.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> removeComposite<span class="asBracket">(</span>c<span class="asOperator">:</span>Composite<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asVar">var</span> cpos<span class="asOperator">:</span>int <span class="asOperator">=</span> composites.indexOf<span class="asBracket">(</span>c<span class="asBracket">)</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>cpos <span class="asOperator">==</span> <span class="asOperator">-</span>1<span class="asBracket">)</span> <span class="asReserved">return</span>;
+            composites.splice<span class="asBracket">(</span>cpos, 1<span class="asBracket">)</span>;
+            c.isParented <span class="asOperator">=</span> <span class="asReserved">false</span>;
+            c.cleanup<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+        
+
+        <span class="asDoc">/**
+         * Paints all members of this Group. This method is called automatically by the 
+         * APEngine class.
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> paint<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+
+            <span class="asReserved">super</span>.paint<span class="asBracket">()</span>;
+        
+            <span class="asVar">var</span> len<span class="asOperator">:</span>int <span class="asOperator">=</span> _composites.length;
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> len; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asVar">var</span> c<span class="asOperator">:</span>Composite <span class="asOperator">=</span> _composites<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                c.paint<span class="asBracket">()</span>;
+            <span class="asBracket">}</span>                        
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * Adds an Group instance to be checked for collision against this one.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> addCollidable<span class="asBracket">(</span>g<span class="asOperator">:</span>Group<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+             collisionList.push<span class="asBracket">(</span>g<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * Removes a Group from the collidable list of this Group.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> removeCollidable<span class="asBracket">(</span>g<span class="asOperator">:</span>Group<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asVar">var</span> pos<span class="asOperator">:</span>int <span class="asOperator">=</span> collisionList.indexOf<span class="asBracket">(</span>g<span class="asBracket">)</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>pos <span class="asOperator">==</span> <span class="asOperator">-</span>1<span class="asBracket">)</span> <span class="asReserved">return</span>;
+            collisionList.splice<span class="asBracket">(</span>pos, 1<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * Adds an array of AbstractCollection instances to be checked for collision 
+         * against this one.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> addCollidableList<span class="asBracket">(</span>list<span class="asOperator">:</span>Array<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+             <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> list.length; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                 <span class="asVar">var</span> g<span class="asOperator">:</span>Group <span class="asOperator">=</span> list<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                 collisionList.push<span class="asBracket">(</span>g<span class="asBracket">)</span>;
+             <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Returns the array of every Group assigned to collide with this Group instance.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> collisionList<span class="asBracket">()</span><span class="asOperator">:</span>Array <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _collisionList;
+        <span class="asBracket">}</span>    
+    
+
+        <span class="asDoc">/**
+         * Returns an array of every particle, constraint, and composite added to the 
+         * Group.
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> getAll<span class="asBracket">()</span><span class="asOperator">:</span>Array <span class="asBracket">{</span>
+            <span class="asReserved">return</span> particles.concat<span class="asBracket">(</span>constraints<span class="asBracket">)</span>.concat<span class="asBracket">(</span>composites<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>    
+
+                        
+        <span class="asDoc">/**
+         * Determines if the members of this Group are checked for collision with one 
+         * another.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> collideInternal<span class="asBracket">()</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _collideInternal;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> collideInternal<span class="asBracket">(</span>b<span class="asOperator">:</span>Boolean<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _collideInternal <span class="asOperator">=</span> b;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Calls the &lt;code&gt;cleanup()&lt;/code&gt; method of every member of this Group.The 
+         * &lt;code&gt;cleanup()&lt;/code&gt; method is called automatically when an Group is removed
+         * from the APEngine.
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> cleanup<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span>.cleanup<span class="asBracket">()</span>;
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> composites.length; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                composites<span class="asBracket">[</span>i<span class="asBracket">]</span>.cleanup<span class="asBracket">()</span>;    
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+                
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">internal</span> <span class="asReserved">override</span> <span class="asFunction">function</span> integrate<span class="asBracket">(</span>dt2<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">super</span>.integrate<span class="asBracket">(</span>dt2<span class="asBracket">)</span>;
+        
+            <span class="asVar">var</span> len<span class="asOperator">:</span>int <span class="asOperator">=</span> _composites.length;
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> len; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asVar">var</span> cmp<span class="asOperator">:</span>Composite <span class="asOperator">=</span> _composites<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                cmp.integrate<span class="asBracket">(</span>dt2<span class="asBracket">)</span>;
+            <span class="asBracket">}</span>                        
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">internal</span> <span class="asReserved">override</span> <span class="asFunction">function</span> satisfyConstraints<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">super</span>.satisfyConstraints<span class="asBracket">()</span>;
+        
+            <span class="asVar">var</span> len<span class="asOperator">:</span>int <span class="asOperator">=</span> _composites.length;
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> len; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asVar">var</span> cmp<span class="asOperator">:</span>Composite <span class="asOperator">=</span> _composites<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                cmp.satisfyConstraints<span class="asBracket">()</span>;
+            <span class="asBracket">}</span>                
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> checkCollisions<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>collideInternal<span class="asBracket">)</span> checkCollisionGroupInternal<span class="asBracket">()</span>;
+            
+            <span class="asVar">var</span> len<span class="asOperator">:</span>int <span class="asOperator">=</span> collisionList.length;
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> len; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asVar">var</span> g<span class="asOperator">:</span>Group <span class="asOperator">=</span> collisionList<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                <span class="asReserved">if</span> <span class="asBracket">(</span>g <span class="asOperator">==</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asReserved">continue</span>;
+                checkCollisionVsGroup<span class="asBracket">(</span>g<span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asReserved">private</span> <span class="asFunction">function</span> checkCollisionGroupInternal<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asComment">// check collisions not in composites
+</span>            checkInternalCollisions<span class="asBracket">()</span>;
+            
+            <span class="asComment">// for every composite in this Group..
+</span>            <span class="asVar">var</span> clen<span class="asOperator">:</span>int <span class="asOperator">=</span> _composites.length;
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> j<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; j <span class="asOperator">&lt;</span> clen; j<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                
+                <span class="asVar">var</span> ca<span class="asOperator">:</span>Composite <span class="asOperator">=</span> _composites<span class="asBracket">[</span>j<span class="asBracket">]</span>;
+                <span class="asReserved">if</span> <span class="asBracket">(</span>ca <span class="asOperator">==</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asReserved">continue</span>;
+                
+                <span class="asComment">// .. vs non composite particles and constraints in this group
+</span>                ca.checkCollisionsVsCollection<span class="asBracket">(</span><span class="asReserved">this</span><span class="asBracket">)</span>;
+                
+                <span class="asComment">// ...vs every other composite in this Group
+</span>                <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> j <span class="asOperator">+</span> 1; i <span class="asOperator">&lt;</span> clen; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    <span class="asVar">var</span> cb<span class="asOperator">:</span>Composite <span class="asOperator">=</span> _composites<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                    <span class="asReserved">if</span> <span class="asBracket">(</span>cb <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> ca.checkCollisionsVsCollection<span class="asBracket">(</span>cb<span class="asBracket">)</span>;
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asReserved">private</span> <span class="asFunction">function</span> checkCollisionVsGroup<span class="asBracket">(</span>g<span class="asOperator">:</span>Group<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asComment">// check particles and constraints not in composites of either group
+</span>            checkCollisionsVsCollection<span class="asBracket">(</span>g<span class="asBracket">)</span>;
+            
+            <span class="asVar">var</span> gc<span class="asOperator">:</span>Composite;
+            <span class="asVar">var</span> clen<span class="asOperator">:</span>int <span class="asOperator">=</span> _composites.length;
+            <span class="asVar">var</span> gclen<span class="asOperator">:</span>int <span class="asOperator">=</span> g.composites.length;
+            
+            <span class="asComment">// for every composite in this group..
+</span>            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> clen; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+            
+                <span class="asComment">// check vs the particles and constraints of g
+</span>                <span class="asVar">var</span> c<span class="asOperator">:</span>Composite <span class="asOperator">=</span> _composites<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                <span class="asReserved">if</span> <span class="asBracket">(</span>c <span class="asOperator">==</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asReserved">continue</span>;
+                c.checkCollisionsVsCollection<span class="asBracket">(</span>g<span class="asBracket">)</span>;
+                
+                <span class="asComment">// check vs composites of g
+</span>                <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> j<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; j <span class="asOperator">&lt;</span> gclen; j<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    gc <span class="asOperator">=</span> g.composites<span class="asBracket">[</span>j<span class="asBracket">]</span>;
+                    <span class="asReserved">if</span> <span class="asBracket">(</span>gc <span class="asOperator">==</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asReserved">continue</span>;
+                    c.checkCollisionsVsCollection<span class="asBracket">(</span>gc<span class="asBracket">)</span>;
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>
+            
+            <span class="asComment">// check particles and constraints of this group vs the composites of g
+</span>            <span class="asReserved">for</span> <span class="asBracket">(</span>j <span class="asOperator">=</span> 0; j <span class="asOperator">&lt;</span> gclen; j<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                gc <span class="asOperator">=</span> g.composites<span class="asBracket">[</span>j<span class="asBracket">]</span>;
+                <span class="asReserved">if</span> <span class="asBracket">(</span>gc <span class="asOperator">==</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asReserved">continue</span>;    
+                checkCollisionsVsCollection<span class="asBracket">(</span>gc<span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

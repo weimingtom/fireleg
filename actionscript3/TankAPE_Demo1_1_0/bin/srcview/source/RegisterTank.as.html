@@ -1,0 +1,27 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>RegisterTank.as</title>
+<link rel="stylesheet" type="text/css" href="../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span>
+<span class="asBracket">{</span>
+    <span class="asReserved">import</span> flash.net.registerClassAlias;
+    <span class="asReserved">import</span> tanks.<span class="asOperator">*</span>;
+    
+    <span class="asReserved">public</span> <span class="asClass">class</span> RegisterTank
+    <span class="asBracket">{</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> RegisterTank<span class="asBracket">()</span> <span class="asBracket">{</span>
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;tanks.TankOne&quot;</span>, TankOne<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;tanks.tankPosition&quot;</span>, tankPosition<span class="asBracket">)</span>;
+            <span class="asComment">//registerClassAlias(&quot;Robot&quot;, Robot);
+</span>            <span class="asComment">//registerClassAlias(&quot;Motor&quot;, Motor);
+</span>            <span class="asComment">//registerClassAlias(&quot;Leg&quot;, Leg);
+</span>            <span class="asComment">//registerClassAlias(&quot;Body&quot;, Body);            
+</span>        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

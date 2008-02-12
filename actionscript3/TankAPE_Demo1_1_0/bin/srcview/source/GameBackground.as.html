@@ -1,0 +1,93 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>GameBackground.as</title>
+<link rel="stylesheet" type="text/css" href="../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span>
+<span class="asBracket">{</span>
+    <span class="asReserved">import</span> org.cove.ape.<span class="asOperator">*</span>;
+    <span class="asReserved">import</span> flash.display.Sprite;
+    
+    <span class="asReserved">public</span> <span class="asClass">class</span> GameBackground
+    <span class="asBracket">{</span>
+        <span class="asReserved">public</span> <span class="asVar">var</span> terrainA<span class="asOperator">:</span>Group;
+        <span class="asReserved">public</span> <span class="asVar">var</span> terrainB<span class="asOperator">:</span>Group;
+        <span class="asReserved">public</span> <span class="asVar">var</span> terrainC<span class="asOperator">:</span>Group;
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> GameBackground<span class="asBracket">()</span> <span class="asBracket">{</span>
+            <span class="asReserved">this</span>.init<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> init<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>                
+            terrainA <span class="asOperator">=</span> <span class="asReserved">new</span> Group<span class="asBracket">()</span>;
+            terrainB <span class="asOperator">=</span> <span class="asReserved">new</span> Group<span class="asBracket">(</span><span class="asReserved">true</span><span class="asBracket">)</span>;
+            terrainC <span class="asOperator">=</span> <span class="asReserved">new</span> Group<span class="asBracket">()</span>;
+            
+            <span class="asVar">var</span> friction<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1;
+            
+            <span class="asVar">var</span> floor<span class="asOperator">:</span>RectangleParticle <span class="asOperator">=</span> <span class="asReserved">new</span> RectangleParticle<span class="asBracket">(</span>600,390,1700,100,0,<span class="asReserved">true</span>,1,0,friction<span class="asBracket">)</span>;
+            floor.setStyle<span class="asBracket">(</span>0,0,0,0x999999<span class="asBracket">)</span>;
+            terrainA.addParticle<span class="asBracket">(</span>floor<span class="asBracket">)</span>;
+            
+            <span class="asComment">// pyramid of boxes
+</span>            <span class="asVar">var</span> box0<span class="asOperator">:</span>RectangleParticle <span class="asOperator">=</span> <span class="asReserved">new</span> RectangleParticle<span class="asBracket">(</span>600,337,600,7,0,<span class="asReserved">true</span>,10,0,friction<span class="asBracket">)</span>;
+            box0.setStyle<span class="asBracket">(</span>1,0x999999,1,0x336699<span class="asBracket">)</span>;
+            terrainA.addParticle<span class="asBracket">(</span>box0<span class="asBracket">)</span>;
+            
+            <span class="asVar">var</span> box1<span class="asOperator">:</span>RectangleParticle <span class="asOperator">=</span> <span class="asReserved">new</span> RectangleParticle<span class="asBracket">(</span>600,330,500,7,0,<span class="asReserved">true</span>,10,0,friction<span class="asBracket">)</span>;
+            box1.setStyle<span class="asBracket">(</span>1,0x999999,1,0x336699<span class="asBracket">)</span>;
+            terrainA.addParticle<span class="asBracket">(</span>box1<span class="asBracket">)</span>;
+            
+            <span class="asVar">var</span> box2<span class="asOperator">:</span>RectangleParticle <span class="asOperator">=</span> <span class="asReserved">new</span> RectangleParticle<span class="asBracket">(</span>600,323,400,7,0,<span class="asReserved">true</span>,10,0,1<span class="asBracket">)</span>;
+            box2.setStyle<span class="asBracket">(</span>1,0x999999,1,0x336699<span class="asBracket">)</span>;
+            terrainA.addParticle<span class="asBracket">(</span>box2<span class="asBracket">)</span>;
+            
+            <span class="asVar">var</span> box3<span class="asOperator">:</span>RectangleParticle <span class="asOperator">=</span> <span class="asReserved">new</span> RectangleParticle<span class="asBracket">(</span>600,316,300,7,0,<span class="asReserved">true</span>,10,0,1<span class="asBracket">)</span>;
+            box3.setStyle<span class="asBracket">(</span>1,0x999999,1,0x336699<span class="asBracket">)</span>;
+            terrainA.addParticle<span class="asBracket">(</span>box3<span class="asBracket">)</span>;
+            
+            <span class="asVar">var</span> box4<span class="asOperator">:</span>RectangleParticle <span class="asOperator">=</span> <span class="asReserved">new</span> RectangleParticle<span class="asBracket">(</span>600,309,200,7,0,<span class="asReserved">true</span>,10,0,1<span class="asBracket">)</span>;
+            box4.setStyle<span class="asBracket">(</span>1,0x999999,1,0x336699<span class="asBracket">)</span>;
+            terrainA.addParticle<span class="asBracket">(</span>box4<span class="asBracket">)</span>;
+                
+            <span class="asVar">var</span> box5<span class="asOperator">:</span>RectangleParticle <span class="asOperator">=</span> <span class="asReserved">new</span> RectangleParticle<span class="asBracket">(</span>600,302,100,7,0,<span class="asReserved">true</span>,10,0,1<span class="asBracket">)</span>;
+            box5.setStyle<span class="asBracket">(</span>1,0x999999,1,0x336699<span class="asBracket">)</span>;
+            terrainA.addParticle<span class="asBracket">(</span>box5<span class="asBracket">)</span>;
+            
+            
+            <span class="asComment">// left side floor
+</span>            <span class="asVar">var</span> floor2<span class="asOperator">:</span>RectangleParticle <span class="asOperator">=</span> <span class="asReserved">new</span> RectangleParticle<span class="asBracket">(</span><span class="asOperator">-</span>100,390,1100,100,0.3,<span class="asReserved">true</span>,1,0,friction<span class="asBracket">)</span>;
+            floor2.setStyle<span class="asBracket">(</span>0,0,0,0x999999<span class="asBracket">)</span>;
+            terrainB.addParticle<span class="asBracket">(</span>floor2<span class="asBracket">)</span>;
+            
+            <span class="asVar">var</span> floor3<span class="asOperator">:</span>RectangleParticle <span class="asOperator">=</span> <span class="asReserved">new</span> RectangleParticle<span class="asBracket">(</span><span class="asOperator">-</span>959,232,700,100,0,<span class="asReserved">true</span>,1,0,friction<span class="asBracket">)</span>;
+            floor3.setStyle<span class="asBracket">(</span>0,0,0,0x999999<span class="asBracket">)</span>;
+            terrainB.addParticle<span class="asBracket">(</span>floor3<span class="asBracket">)</span>;
+            
+            <span class="asVar">var</span> box6<span class="asOperator">:</span>RectangleParticle <span class="asOperator">=</span> <span class="asReserved">new</span> RectangleParticle<span class="asBracket">(</span><span class="asOperator">-</span>990,12,50,25,0<span class="asBracket">)</span>;
+            box6.setStyle<span class="asBracket">(</span>1,0x999999,1,0x336699<span class="asBracket">)</span>;
+            terrainB.addParticle<span class="asBracket">(</span>box6<span class="asBracket">)</span>;
+            
+            <span class="asVar">var</span> floor5<span class="asOperator">:</span>RectangleParticle <span class="asOperator">=</span> <span class="asReserved">new</span> RectangleParticle<span class="asBracket">(</span><span class="asOperator">-</span>1284,170,50,100,0,<span class="asReserved">true</span><span class="asBracket">)</span>;
+            floor5.setStyle<span class="asBracket">(</span>0,0,0,0x999999<span class="asBracket">)</span>;
+            terrainB.addParticle<span class="asBracket">(</span>floor5<span class="asBracket">)</span>;
+            
+            
+            <span class="asComment">// right side floor
+</span>            <span class="asVar">var</span> floor6<span class="asOperator">:</span>RectangleParticle <span class="asOperator">=</span> <span class="asReserved">new</span> RectangleParticle<span class="asBracket">(</span>1430,320,50,60,0,<span class="asReserved">true</span><span class="asBracket">)</span>;
+            floor6.setStyle<span class="asBracket">(</span>0,0,0,0x999999<span class="asBracket">)</span>;
+            terrainC.addParticle<span class="asBracket">(</span>floor6<span class="asBracket">)</span>;
+            
+
+            APEngine.addGroup<span class="asBracket">(</span>terrainA<span class="asBracket">)</span>;
+            APEngine.addGroup<span class="asBracket">(</span>terrainB<span class="asBracket">)</span>;
+            APEngine.addGroup<span class="asBracket">(</span>terrainC<span class="asBracket">)</span>;
+            
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

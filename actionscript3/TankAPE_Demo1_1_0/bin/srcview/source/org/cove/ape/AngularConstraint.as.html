@@ -1,0 +1,221 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>AngularConstraint.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asComment">/*
+Copyright (c) 2006, 2007 Alec Cove
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/</span>
+
+<span class="asComment">/*
+TODO:
+*/</span>
+
+<span class="asComment">// This class contributed by Jim Bonacci - www.totaljerkface.com
+</span><span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+    
+    <span class="asReserved">import</span> flash.display.Sprite;
+    <span class="asComment">//import flash.display.DisplayObject;
+</span>    
+    <span class="asReserved">import</span> flash.events.Event;
+    <span class="asReserved">import</span> flash.events.EventDispatcher;
+    <span class="asReserved">import</span> flash.events.IEventDispatcher;
+    
+    <span class="asDoc">/**
+     * An Angular Constraint between 3 particles
+     */</span>
+    <span class="asReserved">public</span> <span class="asClass">class</span> AngularConstraint <span class="asReserved">extends</span> SpringConstraint <span class="asBracket">{</span>
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> _p3<span class="asOperator">:</span>AbstractParticle;
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> _minAng<span class="asOperator">:</span>Number;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _maxAng<span class="asOperator">:</span>Number;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _minBreakAng<span class="asOperator">:</span>Number;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _maxBreakAng<span class="asOperator">:</span>Number;
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> AngularConstraint<span class="asBracket">(</span>
+                p1<span class="asOperator">:</span>AbstractParticle, 
+                p2<span class="asOperator">:</span>AbstractParticle,
+                p3<span class="asOperator">:</span>AbstractParticle,
+                minAng<span class="asOperator">:</span>Number,
+                maxAng<span class="asOperator">:</span>Number,
+                minBreakAng<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asOperator">-</span>10,
+                maxBreakAng<span class="asOperator">:</span>Number <span class="asOperator">=</span> 10,
+                stiffness<span class="asOperator">:</span>Number <span class="asOperator">=</span> .5,
+                dependent<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span>,
+                collidable<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span>,
+                rectHeight<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1,
+                rectScale<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1,
+                scaleToLength<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">super</span><span class="asBracket">(</span>p1, p2, stiffness, <span class="asReserved">false</span>, dependent, collidable, rectHeight, rectScale, scaleToLength<span class="asBracket">)</span>;
+            
+            <span class="asReserved">this</span>.p3 <span class="asOperator">=</span> p3;
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>minAng <span class="asOperator">==</span> 10<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">this</span>.minAng <span class="asOperator">=</span> acRadian;
+                <span class="asReserved">this</span>.maxAng <span class="asOperator">=</span> acRadian;
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asBracket">{</span>
+                <span class="asReserved">this</span>.minAng <span class="asOperator">=</span> minAng;
+                <span class="asReserved">this</span>.maxAng <span class="asOperator">=</span> maxAng;
+            <span class="asBracket">}</span>
+            <span class="asReserved">this</span>.minBreakAng <span class="asOperator">=</span> minBreakAng;
+            <span class="asReserved">this</span>.maxBreakAng <span class="asOperator">=</span> maxBreakAng;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> p3<span class="asBracket">()</span><span class="asOperator">:</span>AbstractParticle <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _p3;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> p3<span class="asBracket">(</span>p<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span> <span class="asBracket">{</span>
+            _p3 <span class="asOperator">=</span> p;
+        <span class="asBracket">}</span>
+        
+        <span class="asDoc">/**
+         * The current difference between the angle of p1, p2, and p3 and a straight line (pi)
+         * 
+         */</span>    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> acRadian<span class="asBracket">()</span><span class="asOperator">:</span>Number<span class="asBracket">{</span>
+            <span class="asVar">var</span> ang12<span class="asOperator">:</span>Number <span class="asOperator">=</span> Math.atan2<span class="asBracket">(</span>p2.curr.y <span class="asOperator">-</span> p1.curr.y, p2.curr.x <span class="asOperator">-</span> p1.curr.x<span class="asBracket">)</span>;
+            <span class="asVar">var</span> ang23<span class="asOperator">:</span>Number <span class="asOperator">=</span> Math.atan2<span class="asBracket">(</span>p3.curr.y <span class="asOperator">-</span> p2.curr.y, p3.curr.x <span class="asOperator">-</span> p2.curr.x<span class="asBracket">)</span>;
+            
+            <span class="asVar">var</span> angDiff<span class="asOperator">:</span>Number <span class="asOperator">=</span> ang12 <span class="asOperator">-</span> ang23;
+            <span class="asReserved">return</span> angDiff;
+        <span class="asBracket">}</span>
+        
+        <span class="asDoc">/**
+         * Returns true if the passed particle is one of the three particles attached to this AngularConstraint.
+         */</span>        
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> isConnectedTo<span class="asBracket">(</span>p<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            <span class="asReserved">return</span> <span class="asBracket">(</span>p <span class="asOperator">==</span> p1 <span class="asOperator">||</span> p <span class="asOperator">==</span> p2 <span class="asOperator">||</span> p <span class="asOperator">==</span> p3<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>        
+        
+        <span class="asDoc">/**
+         * Returns true if any connected particle&apos;s &lt;code&gt;fixed&lt;/code&gt; property is true.
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> <span class="asReserved">get</span> fixed<span class="asBracket">()</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            <span class="asReserved">return</span> <span class="asBracket">(</span>p1.fixed <span class="asOperator">&amp;&amp;</span> p2.fixed <span class="asOperator">&amp;&amp;</span> p3.fixed<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> minAng<span class="asBracket">()</span><span class="asOperator">:</span>Number<span class="asBracket">{</span>
+            <span class="asReserved">return</span> _minAng;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> minAng<span class="asBracket">(</span>n<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span><span class="asBracket">{</span>
+            _minAng <span class="asOperator">=</span> n;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> maxAng<span class="asBracket">()</span><span class="asOperator">:</span>Number<span class="asBracket">{</span>
+            <span class="asReserved">return</span> _maxAng;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> maxAng<span class="asBracket">(</span>n<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span><span class="asBracket">{</span>
+            _maxAng <span class="asOperator">=</span> n;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> minBreakAng<span class="asBracket">()</span><span class="asOperator">:</span>Number<span class="asBracket">{</span>
+            <span class="asReserved">return</span> _minBreakAng;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> minBreakAng<span class="asBracket">(</span>n<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span><span class="asBracket">{</span>
+            _minBreakAng <span class="asOperator">=</span> n;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> maxBreakAng<span class="asBracket">()</span><span class="asOperator">:</span>Number<span class="asBracket">{</span>
+            <span class="asReserved">return</span> _maxBreakAng;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> maxBreakAng<span class="asBracket">(</span>n<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span><span class="asBracket">{</span>
+            _maxBreakAng <span class="asOperator">=</span> n;
+        <span class="asBracket">}</span>
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> resolve<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>broken<span class="asBracket">)</span> <span class="asReserved">return</span>;
+            
+            <span class="asVar">var</span> PI2<span class="asOperator">:</span>Number <span class="asOperator">=</span> Math.PI <span class="asOperator">*</span> 2;
+            
+            <span class="asVar">var</span> ang12<span class="asOperator">:</span>Number <span class="asOperator">=</span> Math.atan2<span class="asBracket">(</span>p2.curr.y <span class="asOperator">-</span> p1.curr.y, p2.curr.x <span class="asOperator">-</span> p1.curr.x<span class="asBracket">)</span>;
+            <span class="asVar">var</span> ang23<span class="asOperator">:</span>Number <span class="asOperator">=</span> Math.atan2<span class="asBracket">(</span>p3.curr.y <span class="asOperator">-</span> p2.curr.y, p3.curr.x <span class="asOperator">-</span> p2.curr.x<span class="asBracket">)</span>;
+            
+            <span class="asVar">var</span> angDiff<span class="asOperator">:</span>Number <span class="asOperator">=</span> ang12 <span class="asOperator">-</span> ang23;
+            <span class="asReserved">while</span> <span class="asBracket">(</span>angDiff <span class="asOperator">&gt;</span> Math.PI<span class="asBracket">)</span> angDiff <span class="asOperator">-=</span> PI2;
+            <span class="asReserved">while</span> <span class="asBracket">(</span>angDiff <span class="asOperator">&lt;</span> <span class="asOperator">-</span>Math.PI<span class="asBracket">)</span> angDiff <span class="asOperator">+=</span> PI2;
+            
+            <span class="asVar">var</span> p2invMass<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asBracket">(</span>dependent <span class="asOperator">==</span> <span class="asReserved">true</span><span class="asBracket">)</span> <span class="asOperator">?</span> 0 <span class="asOperator">:</span> p2.invMass;
+            
+            <span class="asVar">var</span> sumInvMass<span class="asOperator">:</span>Number <span class="asOperator">=</span> p1.invMass <span class="asOperator">+</span> p2invMass;
+            <span class="asVar">var</span> mult1<span class="asOperator">:</span>Number <span class="asOperator">=</span> p1.invMass <span class="asOperator">/</span> sumInvMass;
+            <span class="asVar">var</span> mult2<span class="asOperator">:</span>Number <span class="asOperator">=</span> p2invMass <span class="asOperator">/</span> sumInvMass;
+            <span class="asVar">var</span> angChange<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0;
+            
+            <span class="asVar">var</span> lowMid<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asBracket">(</span>maxAng <span class="asOperator">-</span> minAng<span class="asBracket">)</span> <span class="asOperator">/</span> 2;
+            <span class="asVar">var</span> highMid<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asBracket">(</span>maxAng <span class="asOperator">+</span> minAng<span class="asBracket">)</span> <span class="asOperator">/</span> 2;
+             <span class="asVar">var</span> breakAng<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asBracket">(</span>maxBreakAng <span class="asOperator">-</span> minBreakAng<span class="asBracket">)</span><span class="asOperator">/</span>2;
+            
+             <span class="asVar">var</span> newDiff<span class="asOperator">:</span>Number <span class="asOperator">=</span> highMid <span class="asOperator">-</span> angDiff;
+            <span class="asReserved">while</span> <span class="asBracket">(</span>newDiff <span class="asOperator">&gt;</span> Math.PI<span class="asBracket">)</span> newDiff <span class="asOperator">-=</span> PI2;
+            <span class="asReserved">while</span> <span class="asBracket">(</span>newDiff <span class="asOperator">&lt;</span> <span class="asOperator">-</span>Math.PI<span class="asBracket">)</span> newDiff <span class="asOperator">+=</span> PI2;
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>newDiff <span class="asOperator">&gt;</span> lowMid<span class="asBracket">)</span> <span class="asBracket">{</span>
+                
+                <span class="asReserved">if</span><span class="asBracket">(</span>newDiff <span class="asOperator">&gt;</span> breakAng<span class="asBracket">)</span> <span class="asBracket">{</span>
+                    <span class="asVar">var</span> diff <span class="asOperator">=</span> newDiff <span class="asOperator">-</span> breakAng;
+                    broken <span class="asOperator">=</span> <span class="asReserved">true</span>;
+                    <span class="asReserved">if</span><span class="asBracket">(</span>hasEventListener<span class="asBracket">(</span>BreakEvent.ANGULAR<span class="asBracket">))</span> <span class="asBracket">{</span>
+                        dispatchEvent<span class="asBracket">(</span><span class="asReserved">new</span> BreakEvent<span class="asBracket">(</span>BreakEvent.ANGULAR, diff<span class="asBracket">))</span>;
+                    <span class="asBracket">}</span>
+                    <span class="asReserved">return</span>;
+                <span class="asBracket">}</span>
+                angChange <span class="asOperator">=</span> newDiff <span class="asOperator">-</span> lowMid;
+                
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>newDiff <span class="asOperator">&lt;</span> <span class="asOperator">-</span>lowMid<span class="asBracket">)</span> <span class="asBracket">{</span>
+                
+                <span class="asReserved">if</span><span class="asBracket">(</span>newDiff <span class="asOperator">&lt;</span> <span class="asOperator">-</span> breakAng<span class="asBracket">)</span> <span class="asBracket">{</span>
+                    <span class="asVar">var</span> diff2 <span class="asOperator">=</span> newDiff <span class="asOperator">+</span> breakAng;
+                    broken <span class="asOperator">=</span> <span class="asReserved">true</span>;
+                    <span class="asReserved">if</span><span class="asBracket">(</span>hasEventListener<span class="asBracket">(</span>BreakEvent.ANGULAR<span class="asBracket">))</span> <span class="asBracket">{</span>
+                        dispatchEvent<span class="asBracket">(</span><span class="asReserved">new</span> BreakEvent<span class="asBracket">(</span>BreakEvent.ANGULAR, diff2<span class="asBracket">))</span>;
+                    <span class="asBracket">}</span>
+                    <span class="asReserved">return</span>;
+                <span class="asBracket">}</span>
+                angChange <span class="asOperator">=</span> newDiff <span class="asOperator">+</span> lowMid;
+            <span class="asBracket">}</span>
+            
+            <span class="asVar">var</span> finalAng<span class="asOperator">:</span>Number <span class="asOperator">=</span> angChange <span class="asOperator">*</span> <span class="asReserved">this</span>.stiffness <span class="asOperator">+</span> ang12;
+            <span class="asVar">var</span> displaceX<span class="asOperator">:</span>Number <span class="asOperator">=</span> p1.curr.x <span class="asOperator">+</span> <span class="asBracket">(</span>p2.curr.x <span class="asOperator">-</span> p1.curr.x<span class="asBracket">)</span> <span class="asOperator">*</span> mult1;
+            <span class="asVar">var</span> displaceY<span class="asOperator">:</span>Number <span class="asOperator">=</span> p1.curr.y <span class="asOperator">+</span> <span class="asBracket">(</span>p2.curr.y <span class="asOperator">-</span> p1.curr.y<span class="asBracket">)</span> <span class="asOperator">*</span> mult1;
+            
+            p1.curr.x <span class="asOperator">=</span> displaceX <span class="asOperator">+</span> Math.cos<span class="asBracket">(</span>finalAng <span class="asOperator">+</span> Math.PI<span class="asBracket">)</span> <span class="asOperator">*</span> restLength <span class="asOperator">*</span> mult1;
+            p1.curr.y <span class="asOperator">=</span> displaceY <span class="asOperator">+</span> Math.sin<span class="asBracket">(</span>finalAng <span class="asOperator">+</span> Math.PI<span class="asBracket">)</span> <span class="asOperator">*</span> restLength <span class="asOperator">*</span> mult1;
+            p2.curr.x <span class="asOperator">=</span> displaceX <span class="asOperator">+</span> Math.cos<span class="asBracket">(</span>finalAng<span class="asBracket">)</span> <span class="asOperator">*</span> restLength <span class="asOperator">*</span> mult2;
+            p2.curr.y <span class="asOperator">=</span> displaceY <span class="asOperator">+</span> Math.sin<span class="asBracket">(</span>finalAng<span class="asBracket">)</span> <span class="asOperator">*</span> restLength <span class="asOperator">*</span> mult2;    
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span>
+</pre></body>
+</html>

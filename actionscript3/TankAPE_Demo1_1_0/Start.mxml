@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"
+    applicationComplete="onAppComplete();" viewSourceURL="srcview/index.html">
+    <mx:Script>
+        <![CDATA[
+        	import mx.core.UIComponent;
+			import jags.multigame.*;       
+			
+			[Bindable] public var game:TankAPE_Demo; 
+			private var keyboard:MultiKeyPress;
+			private var greenButton:Sprite;	
+			
+            private function onAppComplete():void
+            {
+				var framesPerSecond:int = 24;
+				this.stage.scaleMode = StageScaleMode.NO_SCALE;
+				this.stage.align = StageAlign.TOP_LEFT;
+				
+				game = new TankAPE_Demo(framesPerSecond, this);
+				keyboard = game.keyboard;
+				
+				stage.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
+            }
+            
+            [Bindable] public var mX:int;
+            [Bindable] public var mY:int;
+			public function onMouseMove(event:MouseEvent):void {
+					mX = stage.mouseX;
+					mY = stage.mouseY;
+			}
+        ]]>
+    </mx:Script>
+    <mx:Canvas id="myCanvas" width="100%" height="100%">
+		<mx:Label x="10" y="456" text="From Server:"/>
+		<mx:Text text="{game.gameServer.lastMessageIn}" width="297" enabled="true" fontFamily="Courier New" fontSize="14" fontWeight="bold" color="#00ff00" id="security_msg" x="10" y="482" height="63"/>
+		
+		<mx:Label x="315" y="456" text="To Server:"/>
+		<mx:Text x="315" y="482" text="{game.gameServer.lastMessageOut}" width="285" height="61" id="last_sent" color="#00ffFF" fontSize="14" fontFamily="Courier New" fontWeight="bold"/>
+		<mx:Label x="315" y="378" text="Your Tank"/>
+		<mx:Label x="315" y="404" text="{game.myX}" id="myX"/>
+		<mx:Label x="315" y="430" text="{game.myY}" id="myY"/>
+		<mx:Label x="10" y="378" text="Mouse"/>
+		<mx:Label x="10" y="404" text="{mX}" id="myMouseX"/>
+		<mx:Label x="10" y="430" text="{mY}" id="myMouseY"/>
+		<mx:Text x="130" y="378" text="p to change direction, i to fly upwards, r or t boost left / right" width="145" height="96"/>
+
+    </mx:Canvas>
+</mx:Application>

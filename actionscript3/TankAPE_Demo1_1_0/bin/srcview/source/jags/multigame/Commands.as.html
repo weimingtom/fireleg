@@ -1,0 +1,119 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>Commands.as</title>
+<link rel="stylesheet" type="text/css" href="../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span> jags.multigame 
+<span class="asBracket">{</span>
+    <span class="asReserved">import</span> org.cove.ape.<span class="asOperator">*</span>;
+        
+    <span class="asReserved">import</span> flash.display.Sprite;
+    <span class="asReserved">import</span> flash.display.Stage;
+    
+    <span class="asReserved">import</span> flash.events.EventDispatcher;
+    <span class="asReserved">import</span> flash.events.Event;
+    <span class="asReserved">import</span> jags.multigame.MessageEvent;
+    
+    <span class="asComment">// Written by Travis Somerville
+</span>    
+    <span class="asDoc">/**********************************************************************
+     * ADD: &quot;COMMANDS TO RECEIVE&quot; and &quot;COMMANDS TO SEND&quot; in the 
+     * functions below as your game needs. 
+     *********************************************************************/</span>
+    <span class="asComment">// 
+</span>    <span class="asReserved">public</span> <span class="asClass">class</span> Commands <span class="asReserved">extends</span> EventDispatcher <span class="asReserved">implements</span> IDataHandler
+    <span class="asBracket">{</span>
+        <span class="asReserved">public</span> <span class="asReserved">const</span> TYPE_CIRCLE<span class="asOperator">:</span>String     <span class="asOperator">=</span> <span class="asString">&quot;1&quot;</span>;
+        <span class="asReserved">public</span> <span class="asReserved">const</span> TYPE_PADDLE<span class="asOperator">:</span>String     <span class="asOperator">=</span> <span class="asString">&quot;2&quot;</span>;
+        <span class="asReserved">public</span> <span class="asReserved">const</span> TYPE_BOUNDARY<span class="asOperator">:</span>String    <span class="asOperator">=</span> <span class="asString">&quot;3&quot;</span>;
+        
+        <span class="asReserved">public</span> <span class="asVar">var</span> x<span class="asOperator">:</span>uint <span class="asOperator">=</span> 75;
+        <span class="asReserved">public</span> <span class="asVar">var</span> y<span class="asOperator">:</span>uint <span class="asOperator">=</span> 100;
+        <span class="asReserved">private</span> <span class="asVar">var</span> data<span class="asOperator">:</span>Array;
+        <span class="asReserved">private</span> <span class="asVar">var</span> name<span class="asOperator">:</span>String;
+        <span class="asReserved">private</span> <span class="asVar">var</span> type<span class="asOperator">:</span>String    
+        <span class="asReserved">private</span> <span class="asVar">var</span>    timeStamp<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asOperator">-</span>1;
+        <span class="asReserved">private</span> <span class="asVar">var</span> from<span class="asOperator">:</span>String <span class="asOperator">=</span> <span class="asString">&quot;&quot;</span>;    
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> e<span class="asOperator">:</span>MessageEvent;
+        
+        <span class="asDoc">/*******************************************
+         * COMMANDS TO RECEIVE
+         ******************************************/</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> parseCommand<span class="asBracket">(</span>incoming<span class="asOperator">:</span>String<span class="asBracket">)</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            <span class="asComment">// -------------------------------------
+</span>            <span class="asComment">//  My chosen format is as follows:
+</span>            <span class="asComment">//  11119945553&gt;conn_5c&gt;group4_g&gt;create:circle1:1:60,60
+</span>            <span class="asComment">//  Basically: timestamp &gt; from &gt; to &gt; action
+</span>            <span class="asComment">// -------------------------------------
+</span>            <span class="asReserved">try</span> <span class="asBracket">{</span>                
+                <span class="asComment">// EXTRACT Time&gt;From&gt;Command headers (time is optional)            
+</span>                <span class="asVar">var</span> fromHeader<span class="asOperator">:</span>Array <span class="asOperator">=</span> incoming.split<span class="asBracket">(</span>NetworkConnection.HEADER_DELIMITER<span class="asBracket">)</span>;
+                <span class="asVar">var</span> command<span class="asOperator">:</span>Array;            
+                <span class="asReserved">if</span> <span class="asBracket">(</span>Config.useTimestamps <span class="asOperator">==</span> <span class="asReserved">true</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    command <span class="asOperator">=</span> fromHeader<span class="asBracket">[</span>2<span class="asBracket">]</span>.split<span class="asBracket">(</span>NetworkConnection.DELIMITER<span class="asBracket">)</span>;
+                    timeStamp <span class="asOperator">=</span> fromHeader<span class="asBracket">[</span>0<span class="asBracket">]</span>;
+                    from <span class="asOperator">=</span> fromHeader<span class="asBracket">[</span>1<span class="asBracket">]</span>;
+                <span class="asBracket">}</span>
+                <span class="asReserved">else</span> <span class="asBracket">{</span>
+                    command <span class="asOperator">=</span> fromHeader<span class="asBracket">[</span>1<span class="asBracket">]</span>.split<span class="asBracket">(</span>NetworkConnection.DELIMITER<span class="asBracket">)</span>;
+                    from <span class="asOperator">=</span> fromHeader<span class="asBracket">[</span>0<span class="asBracket">]</span>;                
+                <span class="asBracket">}</span>
+                    
+                <span class="asTrace">trace</span><span class="asBracket">(</span><span class="asString">&quot;IN: &quot;</span><span class="asOperator">+</span> incoming<span class="asBracket">)</span>;
+                
+                <span class="asReserved">if</span> <span class="asBracket">(</span>command <span class="asOperator">!=</span> <span class="asReserved">null</span> <span class="asOperator">&amp;&amp;</span> command.length <span class="asOperator">&gt;</span> 1<span class="asBracket">)</span> <span class="asBracket">{</span>
+                    <span class="asReserved">if</span> <span class="asBracket">(</span>command<span class="asBracket">[</span>0<span class="asBracket">]</span> <span class="asOperator">==</span> <span class="asString">&quot;place&quot;</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                        name <span class="asOperator">=</span> command<span class="asBracket">[</span>1<span class="asBracket">]</span>;
+                        data <span class="asOperator">=</span> String<span class="asBracket">(</span>command<span class="asBracket">[</span>2<span class="asBracket">])</span>.split<span class="asBracket">(</span><span class="asString">&quot;,&quot;</span><span class="asBracket">)</span>;
+                        x <span class="asOperator">=</span> data<span class="asBracket">[</span>0<span class="asBracket">]</span>;
+                        y <span class="asOperator">=</span> data<span class="asBracket">[</span>1<span class="asBracket">]</span>;
+                        <span class="asTrace">trace</span><span class="asBracket">(</span><span class="asString">&quot;place &quot;</span><span class="asOperator">+</span> x<span class="asOperator">+</span><span class="asString">&quot;,&quot;</span><span class="asOperator">+</span>y<span class="asBracket">)</span>;
+
+                        <span class="asComment">//e = new CommandEvent(CommandEvent.PLACE_IT, &quot;particle&quot;, name, x, y, timeStamp);                        
+</span>                        <span class="asComment">//dispatchEvent(e);
+</span>                        <span class="asComment">//world.place(name, x,y, timeStamp);                    
+</span>                    <span class="asBracket">}</span>
+                    <span class="asReserved">if</span> <span class="asBracket">(</span>command<span class="asBracket">[</span>0<span class="asBracket">]</span> <span class="asOperator">==</span> <span class="asString">&quot;create&quot;</span><span class="asBracket">)</span> <span class="asBracket">{</span>        
+                        type <span class="asOperator">=</span> command<span class="asBracket">[</span>2<span class="asBracket">]</span>;
+                        name <span class="asOperator">=</span> command<span class="asBracket">[</span>1<span class="asBracket">]</span>;            
+                        data <span class="asOperator">=</span> String<span class="asBracket">(</span>command<span class="asBracket">[</span>3<span class="asBracket">])</span>.split<span class="asBracket">(</span><span class="asString">&quot;,&quot;</span><span class="asBracket">)</span>;
+                        x <span class="asOperator">=</span> data<span class="asBracket">[</span>0<span class="asBracket">]</span>;
+                        y <span class="asOperator">=</span> data<span class="asBracket">[</span>1<span class="asBracket">]</span>;
+                        
+                        <span class="asTrace">trace</span><span class="asBracket">(</span><span class="asString">&quot;create &quot;</span><span class="asOperator">+</span> type <span class="asOperator">+</span><span class="asString">&quot; &quot;</span><span class="asOperator">+</span> x<span class="asOperator">+</span><span class="asString">&quot;,&quot;</span><span class="asOperator">+</span>y<span class="asBracket">)</span>;
+                        <span class="asComment">//e = new CommandEvent(CommandEvent.CREATE_IT, type, name, x, y, timeStamp);
+</span>                        <span class="asComment">//dispatchEvent(e);
+</span>                    <span class="asBracket">}</span>                
+                    <span class="asReserved">return</span> <span class="asReserved">true</span>;
+                <span class="asBracket">}</span>
+                <span class="asReserved">else</span> <span class="asReserved">return</span> <span class="asReserved">false</span>;
+            <span class="asBracket">}</span>
+            <span class="asReserved">catch</span> <span class="asBracket">(</span>e<span class="asOperator">:</span>Error<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asTrace">trace</span><span class="asBracket">(</span><span class="asString">&quot;COMMAND ERROR: *** &quot;</span><span class="asOperator">+</span> incoming<span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+            <span class="asReserved">return</span> <span class="asReserved">false</span>;            
+        <span class="asBracket">}</span>
+        
+        <span class="asDoc">/***********************************************************
+         * COMMANDS TO SEND
+         * 
+         * These helper functions create the string message
+         * to be sent to the game server.
+         * 
+         * They are the same strings you parse above.
+         * ********************************************************/</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> create<span class="asBracket">(</span>name<span class="asOperator">:</span>String, type<span class="asOperator">:</span>String, x<span class="asOperator">:</span>int, y<span class="asOperator">:</span>int<span class="asBracket">)</span><span class="asOperator">:</span>String <span class="asBracket">{</span>
+            <span class="asReserved">return</span> <span class="asString">&quot;create:&quot;</span><span class="asOperator">+</span>name<span class="asOperator">+</span><span class="asString">&quot;:&quot;</span><span class="asOperator">+</span>type<span class="asOperator">+</span><span class="asString">&quot;:&quot;</span><span class="asOperator">+</span>x<span class="asOperator">+</span><span class="asString">&quot;,&quot;</span><span class="asOperator">+</span>y;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> place<span class="asBracket">(</span>name<span class="asOperator">:</span>String, x<span class="asOperator">:</span>int, y<span class="asOperator">:</span>int<span class="asBracket">)</span><span class="asOperator">:</span>String <span class="asBracket">{</span>
+            <span class="asReserved">return</span> <span class="asString">&quot;place:&quot;</span><span class="asOperator">+</span>name<span class="asOperator">+</span><span class="asString">&quot;:&quot;</span><span class="asOperator">+</span>x<span class="asOperator">+</span><span class="asString">&quot;,&quot;</span><span class="asOperator">+</span>y;
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

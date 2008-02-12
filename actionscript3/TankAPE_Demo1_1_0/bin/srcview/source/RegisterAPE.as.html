@@ -1,0 +1,49 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>RegisterAPE.as</title>
+<link rel="stylesheet" type="text/css" href="../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span>
+<span class="asBracket">{</span>
+    
+    <span class="asReserved">import</span> flash.net.registerClassAlias;
+    <span class="asReserved">import</span> org.cove.ape.<span class="asOperator">*</span>;
+    <span class="asReserved">import</span> org.cove.ape.JAGS.<span class="asOperator">*</span>;
+    
+    <span class="asReserved">public</span> <span class="asClass">class</span> RegisterAPE
+    <span class="asBracket">{</span>    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> RegisterAPE<span class="asBracket">()</span> <span class="asBracket">{</span>        
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.WheelParticle&quot;</span>, WheelParticle<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.JAGS.JAGSComposite&quot;</span>, JAGSComposite<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.JAGS.JAGSGroup&quot;</span>, JAGSGroup<span class="asBracket">)</span>;            
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.RectangleParticle&quot;</span>, org.cove.ape.RectangleParticle<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.AbstractCollection&quot;</span>, org.cove.ape.AbstractCollection<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.AbstractConstraint&quot;</span>, org.cove.ape.AbstractConstraint<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.AbstractItem&quot;</span>, org.cove.ape.AbstractItem<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.AbstractParticle&quot;</span>, org.cove.ape.AbstractParticle<span class="asBracket">)</span>;
+<span class="asComment">// does not compile            registerClassAlias(&quot;org.cove.ape.AngularConstraint&quot;, org.cove.ape.AngularConstraint);
+</span>            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.APEngine&quot;</span>, org.cove.ape.APEngine<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.CircleParticle&quot;</span>, org.cove.ape.CircleParticle<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.Collision&quot;</span>, org.cove.ape.Collision<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.CollisionDetector&quot;</span>, org.cove.ape.CollisionDetector<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.CollisionEvent&quot;</span>, org.cove.ape.CollisionEvent<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.CollisionResolver&quot;</span>, org.cove.ape.CollisionResolver<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.Composite&quot;</span>, org.cove.ape.Composite<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.Group&quot;</span>, org.cove.ape.Group<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.IForce&quot;</span>, org.cove.ape.IForce<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.Interval&quot;</span>, org.cove.ape.Interval<span class="asBracket">)</span>;
+            <span class="asComment">//registerClassAlias(&quot;org.cove.ape.MathUtil&quot;, org.cove.ape.MathUtil);
+</span>            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.RimParticle&quot;</span>, org.cove.ape.RimParticle<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.SpringConstraint&quot;</span>, org.cove.ape.SpringConstraint<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.SpringConstraintParticle&quot;</span>, org.cove.ape.SpringConstraintParticle<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.Vector&quot;</span>, org.cove.ape.Vector<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.VectorForce&quot;</span>, org.cove.ape.VectorForce<span class="asBracket">)</span>;
+            registerClassAlias<span class="asBracket">(</span><span class="asString">&quot;org.cove.ape.WheelParticle&quot;</span>, org.cove.ape.WheelParticle<span class="asBracket">)</span>;        
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

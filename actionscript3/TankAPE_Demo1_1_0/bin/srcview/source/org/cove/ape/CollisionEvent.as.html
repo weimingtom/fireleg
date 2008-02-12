@@ -1,0 +1,58 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>CollisionEvent.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+    
+    <span class="asReserved">import</span> flash.events.Event;
+    
+    <span class="asDoc">/**
+     * CollisionEvent objects are dispatched during a collision between two 
+     * AbstractItem (Particle or Constraint) objects. You can retrieve the 
+     * AbstractItem that has collided with the target object by using the 
+     * &lt;code&gt;collidingItem&lt;/code&gt; property.
+     */</span>
+    <span class="asReserved">public</span> <span class="asClass">class</span> CollisionEvent <span class="asReserved">extends</span> Event <span class="asBracket">{</span>
+        
+        <span class="asDoc">/**
+         * Defines the value of the type property of a collide event object
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asReserved">const</span> COLLIDE<span class="asOperator">:</span>String <span class="asOperator">=</span> <span class="asString">&quot;collide&quot;</span>;
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asReserved">const</span> FIRST_COLLIDE<span class="asOperator">:</span>String <span class="asOperator">=</span> <span class="asString">&quot;firstCollide&quot;</span>;
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> _collidingItem<span class="asOperator">:</span>AbstractItem;
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> CollisionEvent<span class="asBracket">(</span>
+                type<span class="asOperator">:</span>String <span class="asOperator">=</span> <span class="asReserved">null</span>, 
+                bubbles<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span>, 
+                cancelable<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span>,
+                collidingItem<span class="asOperator">:</span>AbstractItem <span class="asOperator">=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">super</span><span class="asBracket">(</span>type, bubbles, cancelable<span class="asBracket">)</span>;    
+            _collidingItem <span class="asOperator">=</span> collidingItem;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Returns the AbstractItem (either a Constraint or Particle) object that has
+         * collided with the target object
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> collidingItem<span class="asBracket">()</span><span class="asOperator">:</span>AbstractItem <span class="asBracket">{</span>
+        
+            <span class="asReserved">if</span> <span class="asBracket">(</span>_collidingItem <span class="asReserved">is</span> SpringConstraintParticle<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asVar">var</span> scp<span class="asOperator">:</span>SpringConstraintParticle <span class="asOperator">=</span> _collidingItem 
+                        <span class="asReserved">as</span> SpringConstraintParticle;
+                <span class="asReserved">return</span> scp.parent;
+            <span class="asBracket">}</span>
+            <span class="asReserved">return</span> _collidingItem;
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span>
+
+</pre></body>
+</html>

@@ -1,0 +1,104 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>TankOne.as</title>
+<link rel="stylesheet" type="text/css" href="../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span> tanks
+<span class="asBracket">{</span>
+    <span class="asReserved">import</span> org.cove.ape.JAGS.<span class="asOperator">*</span>;
+    <span class="asReserved">import</span> org.cove.ape.WheelParticle;
+    <span class="asReserved">import</span> org.cove.ape.RectangleParticle;
+    <span class="asReserved">import</span> org.cove.ape.Composite;
+    <span class="asReserved">import</span> org.cove.ape.SpringConstraint;
+    <span class="asReserved">import</span> flash.utils.<span class="asOperator">*</span>;
+    <span class="asReserved">import</span> org.cove.ape.AbstractParticle;
+    
+    <span class="asReserved">public</span> <span class="asClass">class</span> TankOne <span class="asReserved">extends</span> org.cove.ape.JAGS.JAGSGroup <span class="asReserved">implements</span> IExternalizable    
+    <span class="asBracket">{</span>
+        <span class="asComment">// this determines if it&apos;s our tank or not
+</span>        <span class="asReserved">public</span> <span class="asVar">var</span> ownedByMe<span class="asOperator">:</span>Boolean;
+        
+        <span class="asReserved">public</span> <span class="asVar">var</span> wheelL<span class="asOperator">:</span>WheelParticle;
+        <span class="asReserved">public</span> <span class="asVar">var</span> wheelR<span class="asOperator">:</span>WheelParticle;
+        <span class="asComment">//public var frame:RectangleParticle;
+</span>        <span class="asReserved">public</span> <span class="asVar">var</span> car<span class="asOperator">:</span>org.cove.ape.JAGS.JAGSComposite;
+        <span class="asReserved">public</span> <span class="asVar">var</span> cL<span class="asOperator">:</span>SpringConstraint;
+        <span class="asReserved">public</span> <span class="asVar">var</span> cR<span class="asOperator">:</span>SpringConstraint;
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> TankOne<span class="asBracket">()</span> <span class="asBracket">{</span>
+        <span class="asBracket">}</span>
+
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> writeExternal<span class="asBracket">(</span>output<span class="asOperator">:</span>IDataOutput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span>.writeExternal<span class="asBracket">(</span>output<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>wheelL<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>wheelR<span class="asBracket">)</span>;
+            <span class="asComment">//output.writeObject(frame);
+</span>            output.writeObject<span class="asBracket">(</span>car<span class="asBracket">)</span>;    
+            output.writeObject<span class="asBracket">(</span>cL<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>cR<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+          
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> readExternal<span class="asBracket">(</span>input<span class="asOperator">:</span>IDataInput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>  
+            <span class="asReserved">super</span>.readExternal<span class="asBracket">(</span>input<span class="asBracket">)</span>;
+            wheelL <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> WheelParticle;
+            wheelR <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> WheelParticle;
+            <span class="asComment">//frame = input.readObject() as RectangleParticle;
+</span>            car <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> org.cove.ape.JAGS.JAGSComposite;
+            cL <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> SpringConstraint;
+            cR <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> SpringConstraint;        
+        <span class="asBracket">}</span>
+                
+        <span class="asReserved">public</span> <span class="asFunction">function</span> create<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asVar">var</span> wx<span class="asOperator">:</span>Number <span class="asOperator">=</span> 100;
+            <span class="asVar">var</span> wy<span class="asOperator">:</span>Number <span class="asOperator">=</span> 25;
+            <span class="asComment">//frame = new RectangleParticle(0,275,wx,wy, 0, false, 0.1, 1, 0);
+</span>            wheelL <span class="asOperator">=</span> <span class="asReserved">new</span> WheelParticle<span class="asBracket">(</span><span class="asOperator">-</span>wx<span class="asOperator">/</span>2,275, wy, <span class="asReserved">false</span>, 20<span class="asBracket">)</span>;
+            wheelR <span class="asOperator">=</span> <span class="asReserved">new</span> WheelParticle<span class="asBracket">(</span>wx<span class="asOperator">/</span>2,275,wy, <span class="asReserved">false</span>, 20<span class="asBracket">)</span>;
+            
+            car <span class="asOperator">=</span> <span class="asReserved">new</span> JAGSComposite<span class="asBracket">()</span>;
+            car.name <span class="asOperator">=</span> <span class="asString">&quot;car&quot;</span>;
+            <span class="asComment">//car.addParticle(frame);
+</span>            car.addParticle<span class="asBracket">(</span>wheelL<span class="asBracket">)</span>;
+            car.addParticle<span class="asBracket">(</span>wheelR<span class="asBracket">)</span>;
+            
+            wheelL.angularVelocity <span class="asOperator">=</span> 30.0;
+            wheelR.angularVelocity <span class="asOperator">=</span> 30.0;
+            wheelL.friction <span class="asOperator">=</span> 1;
+            wheelR.friction <span class="asOperator">=</span> 1;
+                    
+            cL <span class="asOperator">=</span> <span class="asReserved">new</span> SpringConstraint<span class="asBracket">(</span>wheelL, wheelR, 1, <span class="asReserved">true</span>, wy <span class="asOperator">*</span> 1.5<span class="asBracket">)</span>;
+            <span class="asComment">//cL = new SpringConstraint(wheelL, frame, 1, true, 8);
+</span>            <span class="asComment">//cR = new SpringConstraint(wheelR, frame, 1);                    
+</span>                    
+            <span class="asReserved">this</span>.addComposite<span class="asBracket">(</span>car<span class="asBracket">)</span>;
+            <span class="asReserved">this</span>.addConstraint<span class="asBracket">(</span>cL<span class="asBracket">)</span>;
+            <span class="asComment">//this.addConstraint(cR);
+</span>        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> getPosition<span class="asBracket">()</span><span class="asOperator">:</span>tankPosition <span class="asBracket">{</span>
+            <span class="asVar">var</span> pos<span class="asOperator">:</span>tankPosition <span class="asOperator">=</span> <span class="asReserved">new</span> tankPosition<span class="asBracket">()</span>;
+            
+            pos.name <span class="asOperator">=</span> <span class="asReserved">this</span>.name;
+            
+            <span class="asVar">var</span> p<span class="asOperator">:</span>AbstractParticle <span class="asOperator">=</span> car.particles<span class="asBracket">[</span>0<span class="asBracket">]</span>;
+            pos.centerX <span class="asOperator">=</span> p.px;
+            pos.centerY <span class="asOperator">=</span> p.py;
+            
+            <span class="asComment">//p = wheelL
+</span>            pos.wheelVelocity <span class="asOperator">=</span> wheelL.angularVelocity;
+            
+            <span class="asReserved">return</span> pos;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> setPosition<span class="asBracket">(</span>pos<span class="asOperator">:</span>tankPosition<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            placeAbsolute<span class="asBracket">(</span>pos.centerX, pos.centerY<span class="asBracket">)</span>;
+            wheelL.angularVelocity <span class="asOperator">=</span> pos.wheelVelocity;
+            wheelR.angularVelocity <span class="asOperator">=</span> pos.wheelVelocity;
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

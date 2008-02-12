@@ -1,0 +1,305 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>TankAPE_Demo.as</title>
+<link rel="stylesheet" type="text/css" href="../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span> <span class="asBracket">{</span>
+    
+    <span class="asComment">// physics
+</span>    <span class="asReserved">import</span> org.cove.ape.<span class="asOperator">*</span>;
+    <span class="asReserved">import</span> tanks.TankOne;  <span class="asComment">// you can get more creative here for your game...
+</span>    
+    <span class="asReserved">import</span> flash.display.Stage;
+    <span class="asReserved">import</span> flash.display.Sprite;
+    
+    <span class="asReserved">import</span> flash.utils.Timer;
+    <span class="asReserved">import</span> flash.events.TimerEvent;        
+    <span class="asReserved">import</span> flash.events.Event;
+
+    <span class="asReserved">import</span> flash.events.KeyboardEvent;
+        
+    <span class="asComment">// multiplayer stuff
+</span>    <span class="asReserved">import</span> jags.multigame.<span class="asOperator">*</span>;
+    <span class="asReserved">import</span> flash.net.registerClassAlias;
+    <span class="asReserved">import</span> org.cove.ape.JAGS.JAGSComposite;
+    <span class="asReserved">import</span> org.cove.ape.JAGS.JAGSGroup;
+    <span class="asReserved">import</span> mx.messaging.config.ServerConfig;
+    <span class="asReserved">import</span> flash.utils.Dictionary;
+    <span class="asReserved">import</span> flash.profiler.showRedrawRegions;
+    <span class="asReserved">import</span> tanks.tankPosition;
+    <span class="asReserved">import</span> flash.net.NetConnection;
+        
+    <span class="asBracket">[</span>SWF<span class="asBracket">(</span>width<span class="asOperator">=</span><span class="asString">&quot;1200&quot;</span>, height<span class="asOperator">=</span><span class="asString">&quot;400&quot;</span>, backgroundColor<span class="asOperator">=</span><span class="asString">&quot;#000000&quot;</span><span class="asBracket">)]</span> 
+    <span class="asReserved">public</span> <span class="asClass">class</span> TankAPE_Demo <span class="asReserved">extends</span> Sprite <span class="asBracket">{</span>
+        <span class="asDoc">/*************************************************************
+         *                 MXML DISPLAY STUFF
+         *************************************************************/</span>
+        <span class="asReserved">public</span> <span class="asVar">var</span> display<span class="asOperator">:</span>Sprite;
+        <span class="asReserved">public</span> <span class="asVar">var</span> myStage<span class="asOperator">:</span>Stage;
+        
+        <span class="asComment">// keeps track of keyboard input up/down
+</span>        <span class="asReserved">public</span>     <span class="asVar">var</span> keyboard<span class="asOperator">:</span>MultiKeyPress;    
+        
+        <span class="asComment">// enemy position
+</span>        <span class="asBracket">[</span><span class="asMetadata">Bindable</span><span class="asBracket">]</span> <span class="asReserved">public</span> <span class="asVar">var</span> positionX<span class="asOperator">:</span>int;            
+        <span class="asBracket">[</span><span class="asMetadata">Bindable</span><span class="asBracket">]</span> <span class="asReserved">public</span> <span class="asVar">var</span> positionY<span class="asOperator">:</span>int;
+
+        <span class="asComment">// your position
+</span>        <span class="asBracket">[</span><span class="asMetadata">Bindable</span><span class="asBracket">]</span> <span class="asReserved">public</span> <span class="asVar">var</span> myX<span class="asOperator">:</span>int;
+        <span class="asBracket">[</span><span class="asMetadata">Bindable</span><span class="asBracket">]</span> <span class="asReserved">public</span> <span class="asVar">var</span> myY<span class="asOperator">:</span>int;
+
+        <span class="asDoc">/*************************************************************
+         *                 MULTI-PLAYER STUFF
+         *************************************************************/</span>                    
+        <span class="asComment">// Important: must have - links all these classes to your swf
+</span>        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asVar">var</span> registerAPE<span class="asOperator">:</span>RegisterAPE <span class="asOperator">=</span> <span class="asReserved">new</span> RegisterAPE<span class="asBracket">()</span>;
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asVar">var</span> registerTank<span class="asOperator">:</span>RegisterTank <span class="asOperator">=</span> <span class="asReserved">new</span> RegisterTank<span class="asBracket">()</span>;
+        
+        <span class="asBracket">[</span><span class="asMetadata">Bindable</span><span class="asBracket">]</span> <span class="asReserved">public</span> <span class="asVar">var</span> gameServer<span class="asOperator">:</span>NetworkConnection;
+        <span class="asReserved">public</span> <span class="asVar">var</span> gameStarted<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span>;
+
+        <span class="asReserved">public</span> <span class="asVar">var</span> myTank<span class="asOperator">:</span>TankOne;        
+        <span class="asReserved">public</span> <span class="asVar">var</span> aTank<span class="asOperator">:</span>TankOne;
+        <span class="asReserved">public</span> <span class="asVar">var</span> deserializedTank<span class="asOperator">:</span>TankOne;
+        <span class="asReserved">public</span> <span class="asVar">var</span> otherTanks<span class="asOperator">:</span>Dictionary <span class="asOperator">=</span> <span class="asReserved">new</span> Dictionary<span class="asBracket">(</span><span class="asReserved">true</span><span class="asBracket">)</span>;
+        
+        <span class="asDoc">/*************************************************************
+         *                 APE PHYSICS STUFF
+         *************************************************************/</span>
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asVar">var</span> halfStageWidth<span class="asOperator">:</span>int <span class="asOperator">=</span> 400;
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asVar">var</span> halfStageHeight<span class="asOperator">:</span>int <span class="asOperator">=</span> 200;
+        <span class="asReserved">private</span> <span class="asVar">var</span> back<span class="asOperator">:</span>GameBackground;
+        
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> gravity<span class="asOperator">:</span>Number <span class="asOperator">=</span> 4; <span class="asComment">//was 10
+</span>        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> helium<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asOperator">-</span>1 <span class="asOperator">*</span> gravity <span class="asOperator">*</span> 1;
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> footGravity<span class="asOperator">:</span>Number <span class="asOperator">=</span> gravity <span class="asOperator">*</span> 1;
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> robotPower<span class="asOperator">:</span>Number <span class="asOperator">=</span> .02;
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> maxVelocity<span class="asOperator">:</span>Number <span class="asOperator">=</span> 300;
+        
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> damping<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1.0;  <span class="asComment">// was .75
+</span>        <span class="asReserved">private</span> <span class="asVar">var</span> zoom<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1.0; <span class="asComment">// 1 = 100%, .5 = 50% (objects are further away, more view)
+</span>
+        <span class="asReserved">private</span> <span class="asVar">var</span> gameTimer<span class="asOperator">:</span>Timer;
+        <span class="asReserved">private</span> <span class="asVar">var</span> framesPerSecond<span class="asOperator">:</span>Number <span class="asOperator">=</span> 30;
+        <span class="asReserved">private</span> <span class="asVar">var</span> refreshMillis<span class="asOperator">:</span>uint <span class="asOperator">=</span> 1000<span class="asOperator">/</span>framesPerSecond;
+        
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> TankAPE_Demo<span class="asBracket">(</span>frameRate<span class="asOperator">:</span>int, display<span class="asOperator">:</span>Sprite<span class="asBracket">)</span> <span class="asBracket">{</span>        
+            <span class="asReserved">this</span>.display <span class="asOperator">=</span> display;
+            myStage <span class="asOperator">=</span> display.stage;
+            keyboard <span class="asOperator">=</span> <span class="asReserved">new</span> MultiKeyPress<span class="asBracket">(</span>display.stage<span class="asBracket">)</span>;
+            myStage.addChild<span class="asBracket">(</span><span class="asReserved">this</span><span class="asBracket">)</span>;
+                                                
+            myStage.frameRate <span class="asOperator">=</span> frameRate;
+            myStage.addEventListener<span class="asBracket">(</span>KeyboardEvent.KEY_UP, keyHandler<span class="asBracket">)</span>;
+
+            setupAPE<span class="asBracket">(</span><span class="asReserved">this</span><span class="asBracket">)</span>;
+            back <span class="asOperator">=</span> <span class="asReserved">new</span> GameBackground<span class="asBracket">()</span>;        
+            
+            startGameLoop<span class="asBracket">()</span>;
+                                            
+            <span class="asDoc">/***************************************************************
+             * Make the game multiplayer by using a JAGS NetworkConnection.
+             ***************************************************************/</span>
+            setupJAGS<span class="asBracket">()</span>;            
+        <span class="asBracket">}</span>
+
+        <span class="asDoc">/*************************************************************
+         *                THIS IS YOUR GAME LOOP
+         *************************************************************/</span>    
+        <span class="asReserved">internal</span> <span class="asVar">var</span> syncCounter<span class="asOperator">:</span>int <span class="asOperator">=</span> 0;
+        <span class="asReserved">private</span> <span class="asFunction">function</span> run<span class="asBracket">(</span>evt<span class="asOperator">:</span>Event<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>        
+            APEngine.step<span class="asBracket">()</span>;
+            APEngine.paint<span class="asBracket">()</span>;
+            
+            centerViewOnGroup<span class="asBracket">(</span>myTank<span class="asBracket">)</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>myTank <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>            
+                <span class="asVar">var</span> location<span class="asOperator">:</span>Vector <span class="asOperator">=</span> myTank.getRelativeBearing<span class="asBracket">(</span>0,0<span class="asBracket">)</span>;
+                myX <span class="asOperator">=</span> location.x;
+                myY <span class="asOperator">=</span> location.y;
+            <span class="asBracket">}</span>
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>gameServer.receivedId<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asComment">// update my tank position for others, every x frames
+</span>                syncCounter <span class="asOperator">=</span> syncCounter <span class="asOperator">+</span> 1;
+                <span class="asReserved">if</span> <span class="asBracket">(</span>syncCounter <span class="asOperator">&gt;=</span> 48<span class="asBracket">)</span> <span class="asBracket">{</span>
+                    sendUpdateTank<span class="asBracket">()</span>;
+                    syncCounter <span class="asOperator">=</span> 0;
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>
+            
+        <span class="asBracket">}</span>
+    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> sendUpdateTank<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+<span class="asComment">//            var b64Tank:String = AMFBase64.outComplete(myTank, false);
+</span>            <span class="asVar">var</span> position<span class="asOperator">:</span>tankPosition <span class="asOperator">=</span> myTank.getPosition<span class="asBracket">()</span>;
+            <span class="asVar">var</span> serializedPosition<span class="asOperator">:</span>String <span class="asOperator">=</span> AMFBase64.outComplete<span class="asBracket">(</span>position, <span class="asReserved">false</span><span class="asBracket">)</span>;
+            <span class="asComment">//var serializedPosition:String = AMFBase64.outAMF(position);
+</span>            <span class="asComment">//gameServer.sayOthers(&quot;update_tank&quot;, b64Tank);
+</span>            gameServer.sayOthers<span class="asBracket">(</span><span class="asString">&quot;update_tank&quot;</span>, serializedPosition<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+
+        <span class="asReserved">public</span> <span class="asFunction">function</span> onUpdateTank<span class="asBracket">(</span>text<span class="asOperator">:</span>GameTextEvent<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asTrace">trace</span><span class="asBracket">(</span><span class="asString">&quot;Incoming Tank Position &quot;</span><span class="asOperator">+</span> text.from <span class="asOperator">+</span><span class="asString">&quot; size =&quot;</span><span class="asOperator">+</span> text.data.length<span class="asBracket">)</span>;
+            <span class="asComment">//deserializedTank = AMFBase64.incomingComplete(text.data, false);
+</span>            <span class="asComment">//deserializedTank.create();
+</span>            <span class="asVar">var</span> position<span class="asOperator">:</span>tankPosition <span class="asOperator">=</span> AMFBase64.incomingComplete<span class="asBracket">(</span>text.data, <span class="asReserved">false</span><span class="asBracket">)</span> <span class="asReserved">as</span> tankPosition;
+            <span class="asComment">//var position:tankPosition = AMFBase64.incomingAMF(text.data) as tankPosition;
+</span>
+            <span class="asComment">// create tank if not yet in existance, or just update if we have it            
+</span>            <span class="asVar">var</span> lookup<span class="asOperator">:</span>TankOne <span class="asOperator">=</span> getByName<span class="asBracket">(</span>position.name, otherTanks<span class="asBracket">)</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>lookup <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                lookup.setPosition<span class="asBracket">(</span>position<span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+            <span class="asReserved">else</span> <span class="asBracket">{</span>
+                <span class="asVar">var</span> newTank<span class="asOperator">:</span>TankOne <span class="asOperator">=</span> <span class="asReserved">new</span> TankOne<span class="asBracket">()</span>;
+                newTank.create<span class="asBracket">()</span>;
+                newTank.name <span class="asOperator">=</span> position.name;
+                newTank.setPosition<span class="asBracket">(</span>position<span class="asBracket">)</span>;
+                
+                newTank.ownedByMe <span class="asOperator">=</span> <span class="asReserved">false</span>;
+                <span class="asComment">//newTank.frame.fillColor = 0x220000;
+</span>                addAPEGroup<span class="asBracket">(</span>newTank<span class="asBracket">)</span>;
+                otherTanks<span class="asBracket">[</span>newTank.name<span class="asBracket">]</span> <span class="asOperator">=</span> newTank;
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>        
+
+        <span class="asReserved">public</span> <span class="asFunction">function</span> createMyTank<span class="asBracket">(</span>name<span class="asOperator">:</span>String<span class="asBracket">)</span><span class="asOperator">:</span>TankOne <span class="asBracket">{</span>
+            aTank <span class="asOperator">=</span> <span class="asReserved">new</span> TankOne<span class="asBracket">()</span>;
+            aTank.name <span class="asOperator">=</span> name;
+            aTank.create<span class="asBracket">()</span>;    
+            aTank.ownedByMe <span class="asOperator">=</span> <span class="asReserved">true</span>;
+            addAPEGroup<span class="asBracket">(</span>aTank<span class="asBracket">)</span>;
+            
+            <span class="asReserved">return</span> aTank;
+        <span class="asBracket">}</span>
+                
+        <span class="asReserved">public</span> <span class="asFunction">function</span> setupJAGS<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            gameServer <span class="asOperator">=</span> <span class="asReserved">new</span> NetworkConnection<span class="asBracket">(</span>Config.URL, Config.port, onIDReceived<span class="asBracket">)</span>;
+
+            <span class="asComment">// This is how you will hear your own game commands.
+</span>            gameServer.addEventListener<span class="asBracket">(</span><span class="asString">&quot;update_tank&quot;</span>, onUpdateTank<span class="asBracket">)</span>;
+            gameServer.addEventListener<span class="asBracket">(</span>NetworkConnection.RemovePlayer, onRemovePlayer<span class="asBracket">)</span>;
+            gameServer.connect<span class="asBracket">()</span>;            
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> onRemovePlayer<span class="asBracket">(</span>ge<span class="asOperator">:</span>GameTextEvent<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asComment">// find their objects and remove.
+</span>            <span class="asComment">// we named objects by connection in this game.
+</span>            <span class="asVar">var</span> destroy<span class="asOperator">:</span>TankOne <span class="asOperator">=</span> getByName<span class="asBracket">(</span>ge.data <span class="asOperator">+</span><span class="asString">&quot;_tank&quot;</span>, otherTanks<span class="asBracket">)</span>;
+            APEngine.removeGroup<span class="asBracket">(</span>destroy<span class="asBracket">)</span>;
+            destroy <span class="asOperator">=</span> <span class="asReserved">null</span>;
+        <span class="asBracket">}</span>
+                                
+        <span class="asComment">// This event let&apos;s us know the server is ready for our game.
+</span>        <span class="asReserved">public</span> <span class="asFunction">function</span> onIDReceived<span class="asBracket">(</span>e<span class="asOperator">:</span>Event<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asTrace">trace</span><span class="asBracket">(</span><span class="asString">&quot;GameServer: Connection IDReceived&quot;</span><span class="asOperator">+</span> gameServer.id<span class="asBracket">)</span>;
+            myTank <span class="asOperator">=</span> createMyTank<span class="asBracket">(</span>gameServer.id <span class="asOperator">+</span><span class="asString">&quot;_tank&quot;</span><span class="asBracket">)</span>;
+            sendUpdateTank<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+            
+        <span class="asReserved">public</span> <span class="asFunction">function</span> addAPEGroup<span class="asBracket">(</span>obj<span class="asOperator">:*</span><span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            APEngine.addGroup<span class="asBracket">(</span>obj<span class="asBracket">)</span>;        
+            obj.addCollidable<span class="asBracket">(</span>back.terrainA<span class="asBracket">)</span>;
+            obj.addCollidable<span class="asBracket">(</span>back.terrainB<span class="asBracket">)</span>;
+            obj.addCollidable<span class="asBracket">(</span>back.terrainC<span class="asBracket">)</span>;                
+        <span class="asBracket">}</span>
+
+        <span class="asReserved">public</span> <span class="asFunction">function</span> startGameLoop<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">if</span> <span class="asBracket">(</span><span class="asOperator">!</span>gameStarted<span class="asBracket">)</span> <span class="asBracket">{</span>                                
+                gameTimer <span class="asOperator">=</span> <span class="asReserved">new</span> Timer<span class="asBracket">(</span>refreshMillis, 0<span class="asBracket">)</span>;            
+                gameTimer.addEventListener<span class="asBracket">(</span>TimerEvent.TIMER, run<span class="asBracket">)</span>;
+                gameTimer.start<span class="asBracket">()</span>;
+                gameStarted <span class="asOperator">=</span> <span class="asReserved">true</span>;                    
+            <span class="asBracket">}</span>            
+        <span class="asBracket">}</span>
+        
+        <span class="asComment">// Stay centered, even if we&apos;ve zoomed in / out.
+</span>        <span class="asReserved">public</span> <span class="asFunction">function</span> centerViewOnGroup<span class="asBracket">(</span>r<span class="asOperator">:</span>JAGSGroup<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asComment">//APEngine.container.x = -robot.sprite.x * zoom + halfStageWidth;
+</span>            <span class="asReserved">if</span> <span class="asBracket">(</span>r <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                APEngine.container.x <span class="asOperator">=</span> r.getRelativeBearing<span class="asBracket">(</span>0,0<span class="asBracket">)</span>.x <span class="asOperator">*</span> <span class="asOperator">-</span>1 <span class="asOperator">*</span> zoom <span class="asOperator">+</span> halfStageWidth;
+                APEngine.container.y <span class="asOperator">=</span> r.getRelativeBearing<span class="asBracket">(</span>0,0<span class="asBracket">)</span>.y <span class="asOperator">*</span> <span class="asOperator">-</span>1 <span class="asOperator">*</span> zoom <span class="asOperator">+</span> halfStageHeight;        
+            <span class="asBracket">}</span>            
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> centerViewOnXY<span class="asBracket">(</span>x<span class="asOperator">:</span>int, y<span class="asOperator">:</span>int<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+                APEngine.container.x <span class="asOperator">=</span> x <span class="asOperator">*</span> zoom <span class="asOperator">+</span> halfStageWidth;
+                APEngine.container.y <span class="asOperator">=</span> y <span class="asOperator">*</span> zoom <span class="asOperator">+</span> halfStageHeight;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">private</span> <span class="asFunction">function</span> setupAPE<span class="asBracket">(</span>ourDisplay<span class="asOperator">:</span>Sprite<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>    
+            APEngine.init<span class="asBracket">(</span>1<span class="asOperator">/</span>4<span class="asBracket">)</span>;
+            APEngine.container <span class="asOperator">=</span> ourDisplay;
+            APEngine.container.scaleX <span class="asOperator">=</span> zoom;
+            APEngine.container.scaleY <span class="asOperator">=</span> zoom;
+            
+            APEngine.addForce<span class="asBracket">(</span><span class="asReserved">new</span> VectorForce<span class="asBracket">(</span><span class="asReserved">false</span>, 0, gravity<span class="asBracket">))</span>;
+            
+            APEngine.damping <span class="asOperator">=</span> damping;
+            APEngine.constraintCollisionCycles <span class="asOperator">=</span> 10;
+            
+            APEngine.container.x <span class="asOperator">=</span> 0;
+            APEngine.container.y <span class="asOperator">=</span> 0;            
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">private</span> <span class="asFunction">function</span> keyHandler<span class="asBracket">(</span>evt<span class="asOperator">:</span>KeyboardEvent<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asTrace">trace</span><span class="asBracket">(</span><span class="asString">&quot;Key press &quot;</span><span class="asOperator">+</span> evt.keyCode<span class="asBracket">)</span>;
+            <span class="asReserved">switch</span> <span class="asBracket">(</span>evt.keyCode<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">case</span> 80<span class="asOperator">:</span> <span class="asComment">// p change power direction
+</span>                    myTank.wheelL.angularVelocity <span class="asOperator">=</span> myTank.wheelL.angularVelocity <span class="asOperator">*</span> <span class="asOperator">-</span>1;
+                    myTank.wheelR.angularVelocity <span class="asOperator">=</span> myTank.wheelR.angularVelocity <span class="asOperator">*</span> <span class="asOperator">-</span>1;
+                    <span class="asReserved">break</span>;
+                <span class="asReserved">case</span> 82<span class="asOperator">:</span> <span class="asComment">// r move right fast
+</span>                    <span class="asComment">//robotObjb64.toggleDirection();
+</span>                    myTank.placeRelative<span class="asBracket">(</span>25,0<span class="asBracket">)</span>;
+                    <span class="asReserved">break</span>;
+                <span class="asReserved">case</span> 84<span class="asOperator">:</span> <span class="asComment">// t move left fast
+</span>                    <span class="asComment">//robotObjb64.toggleLegs();
+</span>                    myTank.placeRelative<span class="asBracket">(</span><span class="asOperator">-</span>25,0<span class="asBracket">)</span>;
+                    <span class="asReserved">break</span>;
+                <span class="asReserved">case</span> 73<span class="asOperator">:</span> <span class="asComment">// i  fly up in the air
+</span>                    myTank.placeRelative<span class="asBracket">(</span>0,25<span class="asBracket">)</span>;
+                    <span class="asComment">//robotObjb64.placeAbsolute(1000, 225);
+</span>                    <span class="asReserved">break</span>;                    
+                <span class="asReserved">case</span> 32<span class="asOperator">:</span>
+                    sendUpdateTank<span class="asBracket">()</span>;
+                    <span class="asReserved">break</span>;    
+                
+                <span class="asComment">// Allows you to see different areas, move syour perspective around.
+</span>            <span class="asComment">/*    case 98:
+                    APEngine.container.y = APEngine.container.y - 100;                
+                    break;
+                case 100:
+                    APEngine.container.x = APEngine.container.x + 100;
+                    break;
+                case 102:
+                    APEngine.container.x = APEngine.container.x - 100;                    
+                    break;
+                case 104:    
+                    APEngine.container.y = APEngine.container.y + 100;
+                    break;                            
+                    */</span>
+                <span class="asReserved">default</span><span class="asOperator">:</span>
+                    <span class="asReserved">break</span>;
+            <span class="asBracket">}</span>
+            
+            sendUpdateTank<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asComment">// Dictionary utility function for ones that reference by String
+</span>        <span class="asReserved">public</span> <span class="asFunction">function</span> getByName<span class="asBracket">(</span>name<span class="asOperator">:</span>String, dict<span class="asOperator">:</span>Dictionary<span class="asBracket">)</span><span class="asOperator">:*</span> <span class="asBracket">{</span>
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> key<span class="asOperator">:</span>String <span class="asReserved">in</span> dict<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">if</span> <span class="asBracket">(</span>key.valueOf<span class="asBracket">()</span> <span class="asOperator">==</span> name.valueOf<span class="asBracket">())</span> <span class="asReserved">return</span> dict<span class="asBracket">[</span>key<span class="asBracket">]</span>;
+             <span class="asBracket">}</span>
+             
+             <span class="asReserved">return</span> <span class="asReserved">null</span>;
+        <span class="asBracket">}</span>        
+    <span class="asBracket">}</span>    
+<span class="asBracket">}</span>
+</pre></body>
+</html>

@@ -1,0 +1,253 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>RectangleParticle.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asComment">/*
+Copyright (c) 2006, 2007 Alec Cove
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/</span>
+
+<span class="asComment">/*    
+TODO:
+- repaint when width or height changes, check radius in circle as well.
+- review getProjection() for precomputing. radius can definitely be precomputed/stored
+*/</span>
+
+<span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+    
+    <span class="asReserved">import</span> flash.display.Graphics;
+    <span class="asReserved">import</span> flash.utils.<span class="asOperator">*</span>;
+    
+    <span class="asDoc">/**
+     * A rectangular shaped particle. 
+     */</span> 
+    <span class="asReserved">public</span> <span class="asClass">class</span> RectangleParticle <span class="asReserved">extends</span> AbstractParticle <span class="asReserved">implements</span> IExternalizable <span class="asBracket">{</span>
+    
+        <span class="asReserved">private</span> <span class="asVar">var</span> _extents<span class="asOperator">:</span>Array;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _axes<span class="asOperator">:</span>Array;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _radian<span class="asOperator">:</span>Number;
+        
+        
+        <span class="asDoc">/**
+         * @param x The initial x position.
+         * @param y The initial y position.
+         * @param width The width of this particle.
+         * @param height The height of this particle.
+         * @param rotation The rotation of this particle in radians.
+         * @param fixed Determines if the particle is fixed or not. Fixed particles
+         * are not affected by forces or collisions and are good to use as surfaces.
+         * Non-fixed particles move freely in response to collision and forces.
+         * @param mass The mass of the particle
+         * @param elasticity The elasticity of the particle. Higher values mean more elasticity.
+         * @param friction The surface friction of the particle. 
+         * &lt;p&gt;
+         * Note that RectangleParticles can be fixed but still have their rotation property 
+         * changed.
+         * &lt;/p&gt;
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> RectangleParticle <span class="asBracket">(</span>
+                x<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1, 
+                y<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1, 
+                width<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1, 
+                height<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1, 
+                rotation<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0, 
+                fixed<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span>,
+                mass<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1, 
+                elasticity<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0.3,
+                friction<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0<span class="asBracket">)</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">super</span><span class="asBracket">(</span>x, y, fixed, mass, elasticity, friction<span class="asBracket">)</span>;
+            
+            _extents <span class="asOperator">=</span> <span class="asReserved">new</span> Array<span class="asBracket">(</span>width<span class="asOperator">/</span>2, height<span class="asOperator">/</span>2<span class="asBracket">)</span>;
+            _axes <span class="asOperator">=</span> <span class="asReserved">new</span> Array<span class="asBracket">(</span><span class="asReserved">new</span> Vector<span class="asBracket">(</span>0,0<span class="asBracket">)</span>, <span class="asReserved">new</span> Vector<span class="asBracket">(</span>0,0<span class="asBracket">))</span>;
+            radian <span class="asOperator">=</span> rotation;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> writeExternal<span class="asBracket">(</span>output<span class="asOperator">:</span>IDataOutput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span>.writeExternal<span class="asBracket">(</span>output<span class="asBracket">)</span>;
+            <span class="asComment">//output.writeObject(_extents);
+</span>            <span class="asVar">var</span> tempX<span class="asOperator">:</span>Number <span class="asOperator">=</span> _extents<span class="asBracket">[</span>0<span class="asBracket">]</span>;
+            <span class="asVar">var</span> tempY<span class="asOperator">:</span>Number <span class="asOperator">=</span> _extents<span class="asBracket">[</span>1<span class="asBracket">]</span>;
+            output.writeObject<span class="asBracket">(</span>tempX<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>tempY<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>_axes<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>_radian<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+          
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> readExternal<span class="asBracket">(</span>input<span class="asOperator">:</span>IDataInput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>  
+            <span class="asReserved">super</span>.readExternal<span class="asBracket">(</span>input<span class="asBracket">)</span>;
+            <span class="asComment">//_extents = input.readObject() as Array;
+</span>            <span class="asVar">var</span> tempX<span class="asOperator">:</span>Number <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span>;
+            <span class="asVar">var</span> tempY<span class="asOperator">:</span>Number <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span>;
+            _extents <span class="asOperator">=</span> <span class="asReserved">new</span> Array<span class="asBracket">(</span>tempX, tempY<span class="asBracket">)</span>;
+            _axes <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Array;
+            _radian <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+        <span class="asBracket">}</span>
+                
+        <span class="asDoc">/**
+         * The rotation of the RectangleParticle in radians. For drawing methods you may 
+         * want to use the &lt;code&gt;angle&lt;/code&gt; property which gives the rotation in
+         * degrees from 0 to 360.
+         * 
+         * &lt;p&gt;
+         * Note that while the RectangleParticle can be rotated, it does not have angular
+         * velocity. In otherwords, during collisions, the rotation is not altered, 
+         * and the energy of the rotation is not applied to other colliding particles.
+         * &lt;/p&gt;
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> radian<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _radian;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> radian<span class="asBracket">(</span>t<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _radian <span class="asOperator">=</span> t;
+            setAxes<span class="asBracket">(</span>t<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+            
+        
+        <span class="asDoc">/**
+         * The rotation of the RectangleParticle in degrees. 
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> angle<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> radian <span class="asOperator">*</span> MathUtil.ONE_EIGHTY_OVER_PI;
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * @private
+         */</span>        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> angle<span class="asBracket">(</span>a<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            radian <span class="asOperator">=</span> a <span class="asOperator">*</span> MathUtil.PI_OVER_ONE_EIGHTY;
+        <span class="asBracket">}</span>
+            
+        
+        <span class="asDoc">/**
+         * Sets up the visual representation of this RectangleParticle. This method is called 
+         * automatically when an instance of this RectangleParticle&apos;s parent Group is added to 
+         * the APEngine, when  this RectangleParticle&apos;s Composite is added to a Group, or the 
+         * RectangleParticle is added to a Composite or Group.
+         */</span>                
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> init<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            cleanup<span class="asBracket">()</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>displayObject <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                initDisplay<span class="asBracket">()</span>;
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asBracket">{</span>
+            
+                <span class="asVar">var</span> w<span class="asOperator">:</span>Number <span class="asOperator">=</span> extents<span class="asBracket">[</span>0<span class="asBracket">]</span> <span class="asOperator">*</span> 2;
+                <span class="asVar">var</span> h<span class="asOperator">:</span>Number <span class="asOperator">=</span> extents<span class="asBracket">[</span>1<span class="asBracket">]</span> <span class="asOperator">*</span> 2;
+                
+                sprite.graphics.clear<span class="asBracket">()</span>;
+                sprite.graphics.lineStyle<span class="asBracket">(</span>lineThickness, lineColor, lineAlpha<span class="asBracket">)</span>;
+                sprite.graphics.beginFill<span class="asBracket">(</span>fillColor, fillAlpha<span class="asBracket">)</span>;
+                sprite.graphics.drawRect<span class="asBracket">(</span><span class="asOperator">-</span>w<span class="asOperator">/</span>2, <span class="asOperator">-</span>h<span class="asOperator">/</span>2, w, h<span class="asBracket">)</span>;
+                sprite.graphics.endFill<span class="asBracket">()</span>;
+            <span class="asBracket">}</span>
+            paint<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * The default painting method for this particle. This method is called automatically
+         * by the &lt;code&gt;APEngine.paint()&lt;/code&gt; method. If you want to define your own custom painting
+         * method, then create a subclass of this class and override &lt;code&gt;paint()&lt;/code&gt;.
+         */</span>    
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> paint<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            sprite.x <span class="asOperator">=</span> curr.x;
+            sprite.y <span class="asOperator">=</span> curr.y;
+            sprite.rotation <span class="asOperator">=</span> angle;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> width<span class="asBracket">(</span>w<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _extents<span class="asBracket">[</span>0<span class="asBracket">]</span> <span class="asOperator">=</span> w<span class="asOperator">/</span>2;
+        <span class="asBracket">}</span>
+
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> width<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _extents<span class="asBracket">[</span>0<span class="asBracket">]</span> <span class="asOperator">*</span> 2
+        <span class="asBracket">}</span>
+
+
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> height<span class="asBracket">(</span>h<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _extents<span class="asBracket">[</span>1<span class="asBracket">]</span> <span class="asOperator">=</span> h <span class="asOperator">/</span> 2;
+        <span class="asBracket">}</span>
+
+
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> height<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _extents<span class="asBracket">[</span>1<span class="asBracket">]</span> <span class="asOperator">*</span> 2
+        <span class="asBracket">}</span>
+                
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>    
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">get</span> axes<span class="asBracket">()</span><span class="asOperator">:</span>Array <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _axes;
+        <span class="asBracket">}</span>
+        
+
+        <span class="asDoc">/**
+         * @private
+         */</span>    
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">get</span> extents<span class="asBracket">()</span><span class="asOperator">:</span>Array <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _extents;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>    
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> getProjection<span class="asBracket">(</span>axis<span class="asOperator">:</span>Vector<span class="asBracket">)</span><span class="asOperator">:</span>Interval <span class="asBracket">{</span>
+            
+            <span class="asVar">var</span> radius<span class="asOperator">:</span>Number <span class="asOperator">=</span>
+                extents<span class="asBracket">[</span>0<span class="asBracket">]</span> <span class="asOperator">*</span> Math.abs<span class="asBracket">(</span>axis.dot<span class="asBracket">(</span>axes<span class="asBracket">[</span>0<span class="asBracket">]))</span><span class="asOperator">+</span>
+                extents<span class="asBracket">[</span>1<span class="asBracket">]</span> <span class="asOperator">*</span> Math.abs<span class="asBracket">(</span>axis.dot<span class="asBracket">(</span>axes<span class="asBracket">[</span>1<span class="asBracket">]))</span>;
+            
+            <span class="asVar">var</span> c<span class="asOperator">:</span>Number <span class="asOperator">=</span> samp.dot<span class="asBracket">(</span>axis<span class="asBracket">)</span>;
+            
+            interval.min <span class="asOperator">=</span> c <span class="asOperator">-</span> radius;
+            interval.max <span class="asOperator">=</span> c <span class="asOperator">+</span> radius;
+            <span class="asReserved">return</span> interval;
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * 
+         */</span>                    
+        <span class="asReserved">private</span> <span class="asFunction">function</span> setAxes<span class="asBracket">(</span>t<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asVar">var</span> s<span class="asOperator">:</span>Number <span class="asOperator">=</span> Math.sin<span class="asBracket">(</span>t<span class="asBracket">)</span>;
+            <span class="asVar">var</span> c<span class="asOperator">:</span>Number <span class="asOperator">=</span> Math.cos<span class="asBracket">(</span>t<span class="asBracket">)</span>;
+            
+            axes<span class="asBracket">[</span>0<span class="asBracket">]</span>.x <span class="asOperator">=</span> c;
+            axes<span class="asBracket">[</span>0<span class="asBracket">]</span>.y <span class="asOperator">=</span> s;
+            axes<span class="asBracket">[</span>1<span class="asBracket">]</span>.x <span class="asOperator">=</span> <span class="asOperator">-</span>s;
+            axes<span class="asBracket">[</span>1<span class="asBracket">]</span>.y <span class="asOperator">=</span> c;
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

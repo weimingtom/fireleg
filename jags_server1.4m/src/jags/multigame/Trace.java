@@ -19,6 +19,6 @@ public final class Trace {
     }
     
     public static void out(String s) {
-       System.out.println(s);
+       //System.out.println(s);
     }
 }

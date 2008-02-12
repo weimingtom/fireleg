@@ -44,7 +44,7 @@ public class HelloSockets implements IDie{
     private ArrayList <jags.multigame.Connection> games = new ArrayList();    
     
     public int timeToLive = 10;
-    public static int portNumber = 82;
+    public static int portNumber = 81;
     
     public GameState state = new GameState();
     
@@ -61,11 +61,11 @@ public class HelloSockets implements IDie{
             
             int count = 0;
             
-            System.out.println("\nLISTENING on PORT "+ portNumber);
+            System.out.println("\nJAGS 1.4m LISTENING on PORT "+ portNumber);
             while(true) {
                 //Trace.out("\n READY: "+ count +"\n");
                 clientSock = serverSock.accept();
-                Trace.out("CONN # "+ count +" :"+
+                System.out.println("CONN # "+ count +" :"+
                             clientSock.getInetAddress().getHostAddress());
                 
                 Connection c = new Connection(librarian, (IBroadCast) broadcaster, (IDie) this, clientSock, count);
@@ -83,7 +83,7 @@ public class HelloSockets implements IDie{
             }
         }
         catch (Exception e) {
-            Trace.out("Hello Sockets Constructor Loop Exception "+ e);
+            System.out.println("Hello Sockets Constructor Loop Exception "+ e);
         }
     }
     
@@ -94,42 +94,59 @@ public class HelloSockets implements IDie{
     // the client must answer our question "?ru_alive"
     // with "!iam_alive" or we kill it on the next check if enough time has passed.
     private void killOldConnections(long seconds) {
-        Trace.out("# Conns:"+ connections.size());
-        
-        long maxMillis = seconds * 1000;
-        long now = System.currentTimeMillis();
-        
-        Connection conn;
-        for (int i=0; i < connections.size(); i++) {
-            conn = connections.get(i);
-            if (now - conn.timeStamp > maxMillis) {
-                // Starts the death process...
-                if (conn.markedToDie == false) {
-                    conn.markedToDie = true;
-                    conn.deathTime = now + maxMillis;
-                    conn.sendClient("!ru_alive");
-                    Trace.out(conn.connectionName +" marked to die.");
-                }
-                // Finishes the death process if enough time has passed.
-                // We have to allow more time in case the client is in
-                // the process of responding.
-                else if (now - conn.deathTime > maxMillis) {
-                    Trace.out("Kill Old "+ i);
-                    die(conn);
-                }
+        try {
+            if (connections != null) {
+                Trace.out("# Conns:"+ connections.size());
+
+                long maxMillis = seconds * 1000;
+                long now = System.currentTimeMillis();
+
+                Connection conn;
+                for (int i=0; i < connections.size(); i++) {
+                    conn = connections.get(i);
+                    if (now - conn.timeStamp > maxMillis) {
+                        // Starts the death process...
+                        if (conn.markedToDie == false) {
+                            conn.markedToDie = true;
+                            conn.deathTime = now + maxMillis;
+                            conn.sendClient("!ru_alive");
+                            Trace.out(conn.connectionName +" marked to die.");
+                        }
+                        // Finishes the death process if enough time has passed.
+                        // We have to allow more time in case the client is in
+                        // the process of responding.
+                        else if (now - conn.deathTime > maxMillis) {
+                            Trace.out("Kill Old "+ i);
+                            die(conn);
+                        }
+                    }
+                } 
             }
-        }        
+        }
+        catch (Exception e) {
+            System.out.println("Kill connection exception "+ e);
+        }
     }
     
     // allows connections to let this class manage the death of connections
     public void die(Connection conn) {
         // Game level
-        conn.gameTitle.unregisterConnection(conn);
+        try {
+            conn.gameTitle.unregisterConnection(conn);
+        }
+        catch (Exception e) {
+            System.out.println("Game Title kill conn exception "+ e);
+        }
         
         // Server level
-    	broadcaster.removeHost(conn);
-        connections.remove(conn);
-        conn.kill();
+        try {
+            broadcaster.removeHost(conn);
+            connections.remove(conn);
+            conn.kill();
+        }
+        catch (Exception e) {
+            System.out.println("System kill conn exception "+ e);            
+        }
     } 
     
     /**

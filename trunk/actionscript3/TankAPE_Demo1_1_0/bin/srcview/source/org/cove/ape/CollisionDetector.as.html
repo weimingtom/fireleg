@@ -1,0 +1,322 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>CollisionDetector.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asComment">/*
+Copyright (c) 2006, 2007 Alec Cove
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/</span>
+
+<span class="asComment">/*
+TODO:
+- multisampling is buggy. needs to be replaced with swept tests
+- get rid of all the object testing and use the double dispatch pattern
+- depths in obbvscircle should not be instantiated each time
+*/</span>
+
+<span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+    
+
+    <span class="asReserved">public</span> <span class="asReserved">final</span> <span class="asClass">class</span> CollisionDetector <span class="asBracket">{</span>    
+        
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asVar">var</span> cpa<span class="asOperator">:</span>AbstractParticle;
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asVar">var</span> cpb<span class="asOperator">:</span>AbstractParticle;
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asVar">var</span> collNormal<span class="asOperator">:</span>Vector;
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asVar">var</span> collDepth<span class="asOperator">:</span>Number;
+            
+
+        <span class="asDoc">/**
+         * Tests the collision between two objects. This initial test determines
+         * the multisampling state of the two particles.
+         */</span>    
+        <span class="asReserved">internal</span> <span class="asReserved">static</span> <span class="asFunction">function</span> test<span class="asBracket">(</span>objA<span class="asOperator">:</span>AbstractParticle, objB<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>objA.fixed <span class="asOperator">&amp;&amp;</span> objB.fixed<span class="asBracket">)</span> <span class="asReserved">return</span>;
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>objA.multisample <span class="asOperator">==</span> 0 <span class="asOperator">&amp;&amp;</span> objB.multisample <span class="asOperator">==</span> 0<span class="asBracket">)</span> <span class="asBracket">{</span>
+                normVsNorm<span class="asBracket">(</span>objA, objB<span class="asBracket">)</span>;
+                            
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>objA.multisample <span class="asOperator">&gt;</span> 0 <span class="asOperator">&amp;&amp;</span> objB.multisample <span class="asOperator">==</span> 0<span class="asBracket">)</span> <span class="asBracket">{</span>
+                sampVsNorm<span class="asBracket">(</span>objA, objB<span class="asBracket">)</span>;
+                
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>objB.multisample <span class="asOperator">&gt;</span> 0 <span class="asOperator">&amp;&amp;</span> objA.multisample <span class="asOperator">==</span> 0<span class="asBracket">)</span> <span class="asBracket">{</span>
+                sampVsNorm<span class="asBracket">(</span>objB, objA<span class="asBracket">)</span>;
+
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>objA.multisample <span class="asOperator">==</span> objB.multisample<span class="asBracket">)</span> <span class="asBracket">{</span>
+                sampVsSamp<span class="asBracket">(</span>objA, objB<span class="asBracket">)</span>;
+
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asBracket">{</span>
+                normVsNorm<span class="asBracket">(</span>objA, objB<span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * default test for two non-multisampled particles
+         */</span>
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asFunction">function</span> normVsNorm<span class="asBracket">(</span>
+                objA<span class="asOperator">:</span>AbstractParticle, objB<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+                    
+            objA.samp.copy<span class="asBracket">(</span>objA.curr<span class="asBracket">)</span>;
+            objB.samp.copy<span class="asBracket">(</span>objB.curr<span class="asBracket">)</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>testTypes<span class="asBracket">(</span>objA, objB<span class="asBracket">))</span> <span class="asBracket">{</span>
+                CollisionResolver.resolve<span class="asBracket">(</span>cpa, cpb, collNormal, collDepth<span class="asBracket">)</span>;
+                <span class="asReserved">return</span> <span class="asReserved">true</span>;
+            <span class="asBracket">}</span>
+            <span class="asReserved">return</span> <span class="asReserved">false</span>
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Tests two particles where one is multisampled and the other is not. Let objectA
+         * be the multisampled particle.
+         */</span>
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asFunction">function</span> sampVsNorm<span class="asBracket">(</span>
+                objA<span class="asOperator">:</span>AbstractParticle, objB<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>normVsNorm<span class="asBracket">(</span>objA,objB<span class="asBracket">))</span> <span class="asReserved">return</span>;
+            
+            <span class="asVar">var</span> s<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1 <span class="asOperator">/</span> <span class="asBracket">(</span>objA.multisample <span class="asOperator">+</span> 1<span class="asBracket">)</span>; 
+            <span class="asVar">var</span> t<span class="asOperator">:</span>Number <span class="asOperator">=</span> s;
+            
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;=</span> objA.multisample; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                objA.samp.setTo<span class="asBracket">(</span>objA.prev.x <span class="asOperator">+</span> t <span class="asOperator">*</span> <span class="asBracket">(</span>objA.curr.x <span class="asOperator">-</span> objA.prev.x<span class="asBracket">)</span>, 
+                                objA.prev.y <span class="asOperator">+</span> t <span class="asOperator">*</span> <span class="asBracket">(</span>objA.curr.y <span class="asOperator">-</span> objA.prev.y<span class="asBracket">))</span>;
+                
+                <span class="asReserved">if</span> <span class="asBracket">(</span>testTypes<span class="asBracket">(</span>objA, objB<span class="asBracket">))</span> <span class="asBracket">{</span>
+                    CollisionResolver.resolve<span class="asBracket">(</span>cpa, cpb, collNormal, collDepth<span class="asBracket">)</span>;
+                    <span class="asReserved">return</span>;
+                <span class="asBracket">}</span>
+                t <span class="asOperator">+=</span> s;
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * Tests two particles where both are of equal multisample rate
+         */</span>        
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asFunction">function</span> sampVsSamp<span class="asBracket">(</span>
+                objA<span class="asOperator">:</span>AbstractParticle, objB<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>normVsNorm<span class="asBracket">(</span>objA,objB<span class="asBracket">))</span> <span class="asReserved">return</span>;
+            
+            <span class="asVar">var</span> s<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1 <span class="asOperator">/</span> <span class="asBracket">(</span>objA.multisample <span class="asOperator">+</span> 1<span class="asBracket">)</span>; 
+            <span class="asVar">var</span> t<span class="asOperator">:</span>Number <span class="asOperator">=</span> s;
+            
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;=</span> objA.multisample; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                
+                objA.samp.setTo<span class="asBracket">(</span>objA.prev.x <span class="asOperator">+</span> t <span class="asOperator">*</span> <span class="asBracket">(</span>objA.curr.x <span class="asOperator">-</span> objA.prev.x<span class="asBracket">)</span>, 
+                                objA.prev.y <span class="asOperator">+</span> t <span class="asOperator">*</span> <span class="asBracket">(</span>objA.curr.y <span class="asOperator">-</span> objA.prev.y<span class="asBracket">))</span>;
+                
+                objB.samp.setTo<span class="asBracket">(</span>objB.prev.x <span class="asOperator">+</span> t <span class="asOperator">*</span> <span class="asBracket">(</span>objB.curr.x <span class="asOperator">-</span> objB.prev.x<span class="asBracket">)</span>, 
+                                objB.prev.y <span class="asOperator">+</span> t <span class="asOperator">*</span> <span class="asBracket">(</span>objB.curr.y <span class="asOperator">-</span> objB.prev.y<span class="asBracket">))</span>;
+                
+                <span class="asReserved">if</span> <span class="asBracket">(</span>testTypes<span class="asBracket">(</span>objA, objB<span class="asBracket">))</span> <span class="asBracket">{</span>
+                    CollisionResolver.resolve<span class="asBracket">(</span>cpa, cpb, collNormal, collDepth<span class="asBracket">)</span>;
+                    <span class="asReserved">return</span>;    
+                <span class="asBracket">}</span> 
+                t <span class="asOperator">+=</span> s;
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Tests collision based on primitive type.
+         */</span>    
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asFunction">function</span> testTypes<span class="asBracket">(</span>
+                objA<span class="asOperator">:</span>AbstractParticle, objB<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>    
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>objA <span class="asReserved">is</span> RectangleParticle <span class="asOperator">&amp;&amp;</span> objB <span class="asReserved">is</span> RectangleParticle<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">return</span> testOBBvsOBB<span class="asBracket">(</span>objA <span class="asReserved">as</span> RectangleParticle, objB <span class="asReserved">as</span> RectangleParticle<span class="asBracket">)</span>;
+            
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>objA <span class="asReserved">is</span> CircleParticle <span class="asOperator">&amp;&amp;</span> objB <span class="asReserved">is</span> CircleParticle<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">return</span> testCirclevsCircle<span class="asBracket">(</span>objA <span class="asReserved">as</span> CircleParticle, objB <span class="asReserved">as</span> CircleParticle<span class="asBracket">)</span>;
+                
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>objA <span class="asReserved">is</span> RectangleParticle <span class="asOperator">&amp;&amp;</span> objB <span class="asReserved">is</span> CircleParticle<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">return</span> testOBBvsCircle<span class="asBracket">(</span>objA <span class="asReserved">as</span> RectangleParticle, objB <span class="asReserved">as</span> CircleParticle<span class="asBracket">)</span>;
+                
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>objA <span class="asReserved">is</span> CircleParticle <span class="asOperator">&amp;&amp;</span> objB <span class="asReserved">is</span> RectangleParticle<span class="asBracket">)</span>  <span class="asBracket">{</span>
+                <span class="asReserved">return</span> testOBBvsCircle<span class="asBracket">(</span>objB <span class="asReserved">as</span> RectangleParticle, objA <span class="asReserved">as</span> CircleParticle<span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+            
+            <span class="asReserved">return</span> <span class="asReserved">false</span>;
+        <span class="asBracket">}</span>
+    
+    
+        <span class="asDoc">/**
+         * Tests the collision between two RectangleParticles (aka OBBs). If there is a 
+         * collision it determines its axis and depth, and then passes it off to the 
+         * CollisionResolver for handling.
+         */</span>
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asFunction">function</span> testOBBvsOBB<span class="asBracket">(</span>
+                ra<span class="asOperator">:</span>RectangleParticle, rb<span class="asOperator">:</span>RectangleParticle<span class="asBracket">)</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            
+            collDepth <span class="asOperator">=</span> Number.POSITIVE_INFINITY;
+            
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> 2; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+        
+                <span class="asVar">var</span> axisA<span class="asOperator">:</span>Vector <span class="asOperator">=</span> ra.axes<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                <span class="asVar">var</span> depthA<span class="asOperator">:</span>Number <span class="asOperator">=</span> testIntervals<span class="asBracket">(</span>
+                        ra.getProjection<span class="asBracket">(</span>axisA<span class="asBracket">)</span>, rb.getProjection<span class="asBracket">(</span>axisA<span class="asBracket">))</span>;
+                <span class="asReserved">if</span> <span class="asBracket">(</span>depthA <span class="asOperator">==</span> 0<span class="asBracket">)</span> <span class="asReserved">return</span> <span class="asReserved">false</span>;
+                
+                <span class="asVar">var</span> axisB<span class="asOperator">:</span>Vector <span class="asOperator">=</span> rb.axes<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                <span class="asVar">var</span> depthB<span class="asOperator">:</span>Number <span class="asOperator">=</span> testIntervals<span class="asBracket">(</span>
+                        ra.getProjection<span class="asBracket">(</span>axisB<span class="asBracket">)</span>, rb.getProjection<span class="asBracket">(</span>axisB<span class="asBracket">))</span>;
+                <span class="asReserved">if</span> <span class="asBracket">(</span>depthB <span class="asOperator">==</span> 0<span class="asBracket">)</span> <span class="asReserved">return</span> <span class="asReserved">false</span>;
+                
+                <span class="asVar">var</span> absA<span class="asOperator">:</span>Number <span class="asOperator">=</span> Math.abs<span class="asBracket">(</span>depthA<span class="asBracket">)</span>;
+                <span class="asVar">var</span> absB<span class="asOperator">:</span>Number <span class="asOperator">=</span> Math.abs<span class="asBracket">(</span>depthB<span class="asBracket">)</span>;
+                
+                <span class="asReserved">if</span> <span class="asBracket">(</span>absA <span class="asOperator">&lt;</span> Math.abs<span class="asBracket">(</span>collDepth<span class="asBracket">)</span> <span class="asOperator">||</span> absB <span class="asOperator">&lt;</span> Math.abs<span class="asBracket">(</span>collDepth<span class="asBracket">))</span> <span class="asBracket">{</span>
+                    <span class="asVar">var</span> altb<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> absA <span class="asOperator">&lt;</span> absB;
+                    collNormal <span class="asOperator">=</span> altb <span class="asOperator">?</span> axisA <span class="asOperator">:</span> axisB;
+                    collDepth <span class="asOperator">=</span> altb <span class="asOperator">?</span> depthA <span class="asOperator">:</span> depthB;
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>
+            
+            cpa <span class="asOperator">=</span> ra;
+            cpb <span class="asOperator">=</span> rb
+            <span class="asReserved">return</span> <span class="asReserved">true</span>;
+        <span class="asBracket">}</span>        
+    
+    
+        <span class="asDoc">/**
+         * Tests the collision between a RectangleParticle (aka an OBB) and a 
+         * CircleParticle. If there is a collision it determines its axis and depth, and 
+         * then passes it off to the CollisionResolver.
+         */</span>
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asFunction">function</span> testOBBvsCircle<span class="asBracket">(</span>
+                ra<span class="asOperator">:</span>RectangleParticle, ca<span class="asOperator">:</span>CircleParticle<span class="asBracket">)</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+             
+            collDepth <span class="asOperator">=</span> Number.POSITIVE_INFINITY;
+            <span class="asVar">var</span> depths<span class="asOperator">:</span>Array <span class="asOperator">=</span> <span class="asReserved">new</span> Array<span class="asBracket">(</span>2<span class="asBracket">)</span>;
+            
+            <span class="asComment">// first go through the axes of the rectangle
+</span>            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> 2; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+    
+                <span class="asVar">var</span> boxAxis<span class="asOperator">:</span>Vector <span class="asOperator">=</span> ra.axes<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                <span class="asVar">var</span> depth<span class="asOperator">:</span>Number <span class="asOperator">=</span> testIntervals<span class="asBracket">(</span>
+                        ra.getProjection<span class="asBracket">(</span>boxAxis<span class="asBracket">)</span>, ca.getProjection<span class="asBracket">(</span>boxAxis<span class="asBracket">))</span>;
+                <span class="asReserved">if</span> <span class="asBracket">(</span>depth <span class="asOperator">==</span> 0<span class="asBracket">)</span> <span class="asReserved">return</span> <span class="asReserved">false</span>;
+    
+                <span class="asReserved">if</span> <span class="asBracket">(</span>Math.abs<span class="asBracket">(</span>depth<span class="asBracket">)</span> <span class="asOperator">&lt;</span> Math.abs<span class="asBracket">(</span>collDepth<span class="asBracket">))</span> <span class="asBracket">{</span>
+                    collNormal <span class="asOperator">=</span> boxAxis;
+                    collDepth <span class="asOperator">=</span> depth;
+                <span class="asBracket">}</span>
+                depths<span class="asBracket">[</span>i<span class="asBracket">]</span> <span class="asOperator">=</span> depth;
+            <span class="asBracket">}</span>    
+            
+            <span class="asComment">// determine if the circle&apos;s center is in a vertex region
+</span>            <span class="asVar">var</span> r<span class="asOperator">:</span>Number <span class="asOperator">=</span> ca.radius;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>Math.abs<span class="asBracket">(</span>depths<span class="asBracket">[</span>0<span class="asBracket">])</span> <span class="asOperator">&lt;</span> r <span class="asOperator">&amp;&amp;</span> Math.abs<span class="asBracket">(</span>depths<span class="asBracket">[</span>1<span class="asBracket">])</span> <span class="asOperator">&lt;</span> r<span class="asBracket">)</span> <span class="asBracket">{</span>
+    
+                <span class="asVar">var</span> vertex<span class="asOperator">:</span>Vector <span class="asOperator">=</span> closestVertexOnOBB<span class="asBracket">(</span>ca.samp, ra<span class="asBracket">)</span>;
+    
+                <span class="asComment">// get the distance from the closest vertex on rect to circle center
+</span>                collNormal <span class="asOperator">=</span> vertex.minus<span class="asBracket">(</span>ca.samp<span class="asBracket">)</span>;
+                <span class="asVar">var</span> mag<span class="asOperator">:</span>Number <span class="asOperator">=</span> collNormal.magnitude<span class="asBracket">()</span>;
+                collDepth <span class="asOperator">=</span> r <span class="asOperator">-</span> mag;
+    
+                <span class="asReserved">if</span> <span class="asBracket">(</span>collDepth <span class="asOperator">&gt;</span> 0<span class="asBracket">)</span> <span class="asBracket">{</span>
+                    <span class="asComment">// there is a collision in one of the vertex regions
+</span>                    collNormal.divEquals<span class="asBracket">(</span>mag<span class="asBracket">)</span>;
+                <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asBracket">{</span>
+                    <span class="asComment">// ra is in vertex region, but is not colliding
+</span>                    <span class="asReserved">return</span> <span class="asReserved">false</span>;
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>
+            
+            cpa <span class="asOperator">=</span> ra;
+            cpb <span class="asOperator">=</span> ca
+            <span class="asReserved">return</span> <span class="asReserved">true</span>;
+        <span class="asBracket">}</span>
+    
+    
+        <span class="asDoc">/**
+         * Tests the collision between two CircleParticles. If there is a collision it 
+         * determines its axis and depth, and then passes it off to the CollisionResolver
+         * for handling.
+         */</span>    
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asFunction">function</span> testCirclevsCircle<span class="asBracket">(</span>
+                ca<span class="asOperator">:</span>CircleParticle, cb<span class="asOperator">:</span>CircleParticle<span class="asBracket">)</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            
+            <span class="asVar">var</span> depthX<span class="asOperator">:</span>Number <span class="asOperator">=</span> testIntervals<span class="asBracket">(</span>ca.getIntervalX<span class="asBracket">()</span>, cb.getIntervalX<span class="asBracket">())</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>depthX <span class="asOperator">==</span> 0<span class="asBracket">)</span> <span class="asReserved">return</span> <span class="asReserved">false</span>;
+            
+            <span class="asVar">var</span> depthY<span class="asOperator">:</span>Number <span class="asOperator">=</span> testIntervals<span class="asBracket">(</span>ca.getIntervalY<span class="asBracket">()</span>, cb.getIntervalY<span class="asBracket">())</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>depthY <span class="asOperator">==</span> 0<span class="asBracket">)</span> <span class="asReserved">return</span> <span class="asReserved">false</span>;
+            
+            collNormal <span class="asOperator">=</span> ca.samp.minus<span class="asBracket">(</span>cb.samp<span class="asBracket">)</span>;
+            <span class="asVar">var</span> mag<span class="asOperator">:</span>Number <span class="asOperator">=</span> collNormal.magnitude<span class="asBracket">()</span>;
+            collDepth <span class="asOperator">=</span> <span class="asBracket">(</span>ca.radius <span class="asOperator">+</span> cb.radius<span class="asBracket">)</span> <span class="asOperator">-</span> mag;
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>collDepth <span class="asOperator">&gt;</span> 0<span class="asBracket">)</span> <span class="asBracket">{</span>
+                collNormal.divEquals<span class="asBracket">(</span>mag<span class="asBracket">)</span>;
+                cpa <span class="asOperator">=</span> ca;
+                cpb <span class="asOperator">=</span> cb
+                <span class="asReserved">return</span> <span class="asReserved">true</span>;
+            <span class="asBracket">}</span>
+            <span class="asReserved">return</span> <span class="asReserved">false</span>;
+        <span class="asBracket">}</span>
+    
+    
+        <span class="asDoc">/**
+         * Returns 0 if intervals do not overlap. Returns smallest depth if they do.
+         */</span>
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asFunction">function</span> testIntervals<span class="asBracket">(</span>
+                intervalA<span class="asOperator">:</span>Interval, intervalB<span class="asOperator">:</span>Interval<span class="asBracket">)</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>intervalA.max <span class="asOperator">&lt;</span> intervalB.min<span class="asBracket">)</span> <span class="asReserved">return</span> 0;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>intervalB.max <span class="asOperator">&lt;</span> intervalA.min<span class="asBracket">)</span> <span class="asReserved">return</span> 0;
+            
+            <span class="asVar">var</span> lenA<span class="asOperator">:</span>Number <span class="asOperator">=</span> intervalB.max <span class="asOperator">-</span> intervalA.min;
+            <span class="asVar">var</span> lenB<span class="asOperator">:</span>Number <span class="asOperator">=</span> intervalB.min <span class="asOperator">-</span> intervalA.max;
+            
+            <span class="asReserved">return</span> <span class="asBracket">(</span>Math.abs<span class="asBracket">(</span>lenA<span class="asBracket">)</span> <span class="asOperator">&lt;</span> Math.abs<span class="asBracket">(</span>lenB<span class="asBracket">))</span> <span class="asOperator">?</span> lenA <span class="asOperator">:</span> lenB;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Returns the location of the closest vertex on r to point p
+         */</span>
+         <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asFunction">function</span> closestVertexOnOBB<span class="asBracket">(</span>p<span class="asOperator">:</span>Vector, r<span class="asOperator">:</span>RectangleParticle<span class="asBracket">)</span><span class="asOperator">:</span>Vector <span class="asBracket">{</span>
+    
+            <span class="asVar">var</span> d<span class="asOperator">:</span>Vector <span class="asOperator">=</span> p.minus<span class="asBracket">(</span>r.samp<span class="asBracket">)</span>;
+            <span class="asVar">var</span> q<span class="asOperator">:</span>Vector <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>r.samp.x, r.samp.y<span class="asBracket">)</span>;
+    
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> 2; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asVar">var</span> dist<span class="asOperator">:</span>Number <span class="asOperator">=</span> d.dot<span class="asBracket">(</span>r.axes<span class="asBracket">[</span>i<span class="asBracket">])</span>;
+    
+                <span class="asReserved">if</span> <span class="asBracket">(</span>dist <span class="asOperator">&gt;=</span> 0<span class="asBracket">)</span> dist <span class="asOperator">=</span> r.extents<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>dist <span class="asOperator">&lt;</span> 0<span class="asBracket">)</span> dist <span class="asOperator">=</span> <span class="asOperator">-</span>r.extents<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+    
+                q.plusEquals<span class="asBracket">(</span>r.axes<span class="asBracket">[</span>i<span class="asBracket">]</span>.mult<span class="asBracket">(</span>dist<span class="asBracket">))</span>;
+            <span class="asBracket">}</span>
+            <span class="asReserved">return</span> q;
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span>
+</pre></body>
+</html>

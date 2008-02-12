@@ -1,0 +1,601 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>AbstractParticle.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre>
+<span class="asComment">/*
+Copyright (c) 2006, 2007 Alec Cove
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/</span>
+
+<span class="asComment">/* 
+TODO:
+- Need removeForces method(s)
+- Center and Position are the same, needs review. Also the comments need review.
+- Should have alwaysRepaint functionality for Constraints, and bump up to AbstractItem
+- See if there&apos;s anywhere where Vectors can be downgraded to simple Point classes
+*/</span>
+
+<span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+    
+    <span class="asReserved">import</span> flash.display.Sprite;
+    <span class="asReserved">import</span> flash.display.DisplayObject;
+    <span class="asReserved">import</span> flash.utils.getQualifiedClassName;
+    <span class="asReserved">import</span> flash.utils.IExternalizable;
+    <span class="asReserved">import</span> flash.utils.<span class="asOperator">*</span>;
+
+         
+    <span class="asDoc">/**
+     * The abstract base class for all particles.
+     * 
+     * &lt;p&gt;
+     * You should not instantiate this class directly -- instead use one of the subclasses.
+     * &lt;/p&gt;
+     */</span>
+    <span class="asReserved">public</span> <span class="asClass">class</span> AbstractParticle <span class="asReserved">extends</span> AbstractItem <span class="asReserved">implements</span> IExternalizable <span class="asBracket">{</span>
+        
+        <span class="asDoc">/** @private */</span>
+        <span class="asReserved">internal</span> <span class="asVar">var</span> curr<span class="asOperator">:</span>Vector;
+        <span class="asDoc">/** @private */</span>
+        <span class="asReserved">internal</span> <span class="asVar">var</span> prev<span class="asOperator">:</span>Vector;
+        <span class="asDoc">/** @private */</span>
+        <span class="asReserved">internal</span> <span class="asVar">var</span> samp<span class="asOperator">:</span>Vector;
+        <span class="asDoc">/** @private */</span>
+        <span class="asReserved">internal</span> <span class="asVar">var</span> interval<span class="asOperator">:</span>Interval;
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> temp<span class="asOperator">:</span>Vector;
+        <span class="asReserved">private</span> <span class="asVar">var</span> forces<span class="asOperator">:</span>Vector;
+        <span class="asReserved">private</span> <span class="asVar">var</span> forceList<span class="asOperator">:</span>Array;
+        <span class="asReserved">private</span> <span class="asVar">var</span> forcePersistentList<span class="asOperator">:</span>Array; <span class="asComment">// JAGS Addition
+</span>        <span class="asReserved">private</span> <span class="asVar">var</span> collision<span class="asOperator">:</span>Collision;
+        <span class="asReserved">private</span> <span class="asVar">var</span> firstCollision<span class="asOperator">:</span>Boolean;
+                
+        <span class="asReserved">private</span> <span class="asVar">var</span> _kfr<span class="asOperator">:</span>Number;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _mass<span class="asOperator">:</span>Number;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _invMass<span class="asOperator">:</span>Number;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _friction<span class="asOperator">:</span>Number;
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> _fixed<span class="asOperator">:</span>Boolean;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _collidable<span class="asOperator">:</span>Boolean;
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> _center<span class="asOperator">:</span>Vector;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _multisample<span class="asOperator">:</span>int;
+            
+        
+        <span class="asDoc">/** 
+         * @private
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> AbstractParticle <span class="asBracket">(</span>
+                x<span class="asOperator">:</span>Number, 
+                y<span class="asOperator">:</span>Number, 
+                isFixed<span class="asOperator">:</span>Boolean, 
+                mass<span class="asOperator">:</span>Number, 
+                elasticity<span class="asOperator">:</span>Number,
+                friction<span class="asOperator">:</span>Number<span class="asBracket">)</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>getQualifiedClassName<span class="asBracket">(</span><span class="asReserved">this</span><span class="asBracket">)</span> <span class="asOperator">==</span> <span class="asString">&quot;org.cove.ape::AbstractParticle&quot;</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">throw</span> <span class="asReserved">new</span> ArgumentError<span class="asBracket">(</span><span class="asString">&quot;AbstractParticle can&apos;t be instantiated directly&quot;</span><span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+            
+            interval <span class="asOperator">=</span> <span class="asReserved">new</span> Interval<span class="asBracket">(</span>0,0<span class="asBracket">)</span>;
+            
+            curr <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>x, y<span class="asBracket">)</span>;
+            prev <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>x, y<span class="asBracket">)</span>;
+            samp <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">()</span>;
+            temp <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">()</span>;
+            fixed <span class="asOperator">=</span> isFixed;
+            
+            forces <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">()</span>;
+            forceList <span class="asOperator">=</span> <span class="asReserved">new</span> Array<span class="asBracket">()</span>;
+             forcePersistentList <span class="asOperator">=</span> <span class="asReserved">new</span> Array<span class="asBracket">()</span>; <span class="asComment">// JAGS Suggestion
+</span>            
+            collision <span class="asOperator">=</span> <span class="asReserved">new</span> Collision<span class="asBracket">(</span><span class="asReserved">new</span> Vector<span class="asBracket">()</span>, <span class="asReserved">new</span> Vector<span class="asBracket">())</span>;
+            collidable <span class="asOperator">=</span> <span class="asReserved">true</span>;
+            firstCollision <span class="asOperator">=</span> <span class="asReserved">false</span>;
+            
+            <span class="asReserved">this</span>.mass <span class="asOperator">=</span> mass;
+            <span class="asReserved">this</span>.elasticity <span class="asOperator">=</span> elasticity;
+            <span class="asReserved">this</span>.friction <span class="asOperator">=</span> friction;
+            
+            setStyle<span class="asBracket">()</span>;
+            
+            _center <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">()</span>;
+            _multisample <span class="asOperator">=</span> 0;
+        <span class="asBracket">}</span>
+    
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> writeExternal<span class="asBracket">(</span>output<span class="asOperator">:</span>IDataOutput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span>.writeExternal<span class="asBracket">(</span>output<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>curr<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>prev<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>samp<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>interval<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>temp<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>forces<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>forceList<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>forcePersistentList<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>collision<span class="asBracket">)</span>;
+            output.writeBoolean<span class="asBracket">(</span>firstCollision<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>_kfr<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>_mass<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>_invMass<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>_friction<span class="asBracket">)</span>;
+            output.writeBoolean<span class="asBracket">(</span>_fixed<span class="asBracket">)</span>;
+            output.writeBoolean<span class="asBracket">(</span>_collidable<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>_center<span class="asBracket">)</span>;
+            output.writeInt<span class="asBracket">(</span>_multisample<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+          
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> readExternal<span class="asBracket">(</span>input<span class="asOperator">:</span>IDataInput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span> 
+            <span class="asReserved">super</span>.readExternal<span class="asBracket">(</span>input<span class="asBracket">)</span>;
+            curr <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            prev <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            samp <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            interval <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Interval;
+        
+            temp <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            forces <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            forceList <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Array;
+            forcePersistentList <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Array; <span class="asComment">// JAGS Addition
+</span>            collision <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Collision;
+            firstCollision <span class="asOperator">=</span> input.readBoolean<span class="asBracket">()</span>;
+                            
+            _kfr <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+            _mass <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+            _invMass <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+            _friction <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+                    
+            _fixed <span class="asOperator">=</span> input.readBoolean<span class="asBracket">()</span>;
+            _collidable <span class="asOperator">=</span> input.readBoolean<span class="asBracket">()</span>;
+                    
+            _center <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            _multisample <span class="asOperator">=</span> input.readInt<span class="asBracket">()</span>;            
+        <span class="asBracket">}</span>        
+        
+        <span class="asDoc">/**
+         * The mass of the particle. Valid values are greater than zero. By default, all particles
+         * have a mass of 1. The mass property has no relation to the size of the particle.
+         * 
+         * @throws ArgumentError ArgumentError if the mass is set less than zero. 
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> mass<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _mass; 
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> mass<span class="asBracket">(</span>m<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">if</span> <span class="asBracket">(</span>m <span class="asOperator">&lt;=</span> 0<span class="asBracket">)</span> <span class="asReserved">throw</span> <span class="asReserved">new</span> ArgumentError<span class="asBracket">(</span><span class="asString">&quot;mass may not be set &lt;= 0&quot;</span><span class="asBracket">)</span>; 
+            _mass <span class="asOperator">=</span> m;
+            _invMass <span class="asOperator">=</span> 1 <span class="asOperator">/</span> _mass;
+        <span class="asBracket">}</span>    
+    
+        
+        <span class="asDoc">/**
+         * The elasticity of the particle. Standard values are between 0 and 1. 
+         * The higher the value, the greater the elasticity.
+         * 
+         * &lt;p&gt;
+         * During collisions the elasticity values are combined. If one particle&apos;s
+         * elasticity is set to 0.4 and the other is set to 0.4 then the collision will
+         * be have a total elasticity of 0.8. The result will be the same if one particle
+         * has an elasticity of 0 and the other 0.8.
+         * &lt;/p&gt;
+         * 
+         * &lt;p&gt;
+         * Setting the elasticity to greater than 1 (of a single particle, or in a combined
+         * collision) will cause particles to bounce with energy greater than naturally 
+         * possible.
+         * &lt;/p&gt;
+         */</span> 
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> elasticity<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _kfr; 
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> elasticity<span class="asBracket">(</span>k<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _kfr <span class="asOperator">=</span> k;
+        <span class="asBracket">}</span>
+        
+
+        <span class="asDoc">/**
+         * Determines the number of intermediate position steps during each collision test.
+         * Setting this number higher on fast moving particles can prevent &apos;tunneling&apos; 
+         * -- when a particle moves so fast it misses collision with another particle.
+         * 
+         * &lt;p&gt;
+         * If two particles both have multisample levels greater than 0 then their 
+         * multisample levels must be equal to be tested correctly. For example, if one 
+         * particle has a multisample level of 4 and another has a multisample level of 5
+         * then the two particles will not be tested for multisampled collision. This is
+         * due to the unequal amount of steps in the collision test. 
+         * &lt;/p&gt;
+         * 
+         * &lt;p&gt;
+         * Multisampling is currently buggy and should only be applied to particles that
+         * have high velocity. You can selectively apply multisampling by doing something
+         * like: 
+         * &lt;/p&gt;
+         * 
+         * &lt;p&gt;
+         * &lt;code&gt;
+         * if (myparticle.velocity.magnitude() &gt; 20) {
+         *     myparticle.multisample = 100;
+         * } else {
+         *     myparticle.multsample = 0;
+         * }
+         * &lt;/code&gt;
+         * &lt;/p&gt;
+         */</span> 
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> multisample<span class="asBracket">()</span><span class="asOperator">:</span>int <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _multisample; 
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> multisample<span class="asBracket">(</span>m<span class="asOperator">:</span>int<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _multisample <span class="asOperator">=</span> m;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Returns A Vector of the current location of the particle
+         */</span>    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> center<span class="asBracket">()</span><span class="asOperator">:</span>Vector <span class="asBracket">{</span>
+            _center.setTo<span class="asBracket">(</span>px, py<span class="asBracket">)</span>
+            <span class="asReserved">return</span> _center;
+        <span class="asBracket">}</span>
+        
+                
+        <span class="asDoc">/**
+         * The surface friction of the particle. Values must be in the range of 0 to 1.
+         * 
+         * &lt;p&gt;
+         * 0 is no friction (slippery), 1 is full friction (sticky).
+         * &lt;/p&gt;
+         * 
+         * &lt;p&gt;
+         * During collisions, the friction values are summed, but are clamped between 1 
+         * and 0. For example, If two particles have 0.7 as their surface friction, then
+         * the resulting friction between the two particles will be 1 (full friction).
+         * &lt;/p&gt;
+         *
+         * &lt;p&gt;
+         * There is a bug in the current release where colliding non-fixed particles with
+         * friction greater than 0 will behave erratically. A workaround is to only set 
+         * the friction of fixed particles.
+         * &lt;/p&gt;
+         * 
+         * @throws ArgumentError ArgumentError if the friction is set less than zero or 
+         * greater than 1
+         */</span>    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> friction<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _friction; 
+        <span class="asBracket">}</span>
+    
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> friction<span class="asBracket">(</span>f<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">if</span> <span class="asBracket">(</span>f <span class="asOperator">&lt;</span> 0 <span class="asOperator">||</span> f <span class="asOperator">&gt;</span> 1<span class="asBracket">)</span>  <span class="asBracket">{</span>
+                <span class="asReserved">throw</span> <span class="asReserved">new</span> ArgumentError<span class="asBracket">(</span><span class="asString">&quot;Legal friction must be &gt;= 0 and &lt;=1&quot;</span><span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+            _friction <span class="asOperator">=</span> f;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * The fixed state of the particle. If the particle is fixed, it does not move in
+         * response to forces or collisions. Fixed particles are good for surfaces.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> fixed<span class="asBracket">()</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _fixed;
+        <span class="asBracket">}</span>
+
+        <span class="asComment">/* 
+         * @private
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> fixed<span class="asBracket">(</span>f<span class="asOperator">:</span>Boolean<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _fixed <span class="asOperator">=</span> f;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * The position of the particle. Getting the position of the particle is useful
+         * for drawing it or testing it for some custom purpose. 
+         * 
+         * &lt;p&gt;
+         * When you get the &lt;code&gt;position&lt;/code&gt; of a particle you are given a copy of 
+         * the current location. Because of this you cannot change the position of a 
+         * particle by altering the &lt;code&gt;x&lt;/code&gt; and &lt;code&gt;y&lt;/code&gt; components of the 
+         * Vector you have retrieved from the position property. You have to do something
+         * instead like: &lt;code&gt; position = new Vector(100,100)&lt;/code&gt;, or you can use the
+         * &lt;code&gt;px&lt;/code&gt; and &lt;code&gt;py&lt;/code&gt; properties instead.
+         * &lt;/p&gt;
+         * 
+         * &lt;p&gt;
+         * You can alter the position of a particle three ways: change its position, set
+         * its velocity, or apply a force to it. Setting the position of a non-fixed 
+         * particle is not the same as setting its fixed property to true. A particle held
+         * in place by its position will behave as if it&apos;s attached there by a 0 length
+         * spring constraint. 
+         * &lt;/p&gt;
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> position<span class="asBracket">()</span><span class="asOperator">:</span>Vector <span class="asBracket">{</span>
+            <span class="asReserved">return</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>curr.x,curr.y<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+         <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> position<span class="asBracket">(</span>p<span class="asOperator">:</span>Vector<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            curr.copy<span class="asBracket">(</span>p<span class="asBracket">)</span>;
+            prev.copy<span class="asBracket">(</span>p<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * The x position of this particle
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> px<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> curr.x;
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> px<span class="asBracket">(</span>x<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            curr.x <span class="asOperator">=</span> x;
+            prev.x <span class="asOperator">=</span> x;    
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * The y position of this particle
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> py<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> curr.y;
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> py<span class="asBracket">(</span>y<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            curr.y <span class="asOperator">=</span> y;
+            prev.y <span class="asOperator">=</span> y;    
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * The velocity of the particle. If you need to change the motion of a particle, 
+         * you should either use this property, or one of the addForce methods. Generally,
+         * the addForce methods are best for slowly altering the motion. The velocity 
+         * property is good for instantaneously setting the velocity, e.g., for 
+         * projectiles.
+         * 
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> velocity<span class="asBracket">()</span><span class="asOperator">:</span>Vector <span class="asBracket">{</span>
+            <span class="asReserved">return</span> curr.minus<span class="asBracket">(</span>prev<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> velocity<span class="asBracket">(</span>v<span class="asOperator">:</span>Vector<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            prev <span class="asOperator">=</span> curr.minus<span class="asBracket">(</span>v<span class="asBracket">)</span>;    
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Determines if the particle can collide with other particles or constraints.
+         * The default state is true.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> collidable<span class="asBracket">()</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _collidable;
+        <span class="asBracket">}</span>
+    
+                
+        <span class="asDoc">/**
+         * @private
+         */</span>        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> collidable<span class="asBracket">(</span>b<span class="asOperator">:</span>Boolean<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _collidable <span class="asOperator">=</span> b;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Assigns a DisplayObject to be used when painting this particle.
+         */</span> 
+        <span class="asReserved">public</span> <span class="asFunction">function</span> setDisplay<span class="asBracket">(</span>d<span class="asOperator">:</span>DisplayObject, offsetX<span class="asOperator">:</span>Number<span class="asOperator">=</span>0, offsetY<span class="asOperator">:</span>Number<span class="asOperator">=</span>0,
+                 rotation<span class="asOperator">:</span>Number<span class="asOperator">=</span>0<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            displayObject <span class="asOperator">=</span> d;
+            displayObjectRotation <span class="asOperator">=</span> rotation;
+            displayObjectOffset <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>offsetX, offsetY<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Adds a force to the particle. Using this method to a force directly to the
+         * particle will only apply that force for a single APEngine.step() cycle. 
+         * 
+         * @param f An IForce object.
+         */</span> 
+         <span class="asReserved">public</span> <span class="asFunction">function</span> addForce<span class="asBracket">(</span>f<span class="asOperator">:</span>IForce<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+             forceList.push<span class="asBracket">(</span>f<span class="asBracket">)</span>;
+         <span class="asBracket">}</span>
+         
+         <span class="asDoc">/**
+         * JAGS Suggested Addition
+         */</span>
+         <span class="asReserved">public</span> <span class="asFunction">function</span> addForcePersistent<span class="asBracket">(</span>f<span class="asOperator">:</span>IForce<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+             forcePersistentList.push<span class="asBracket">(</span>f<span class="asBracket">)</span>;
+         <span class="asBracket">}</span>         
+        
+    
+        <span class="asDoc">/**
+         * The &lt;code&gt;update()&lt;/code&gt; method is called automatically during the
+         * APEngine.step() cycle. This method integrates the particle.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> update<span class="asBracket">(</span>dt2<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>fixed<span class="asBracket">)</span> <span class="asReserved">return</span>;
+            
+            accumulateForces<span class="asBracket">()</span>;
+    
+            temp.copy<span class="asBracket">(</span>curr<span class="asBracket">)</span>;            
+            <span class="asVar">var</span> nv<span class="asOperator">:</span>Vector <span class="asOperator">=</span> velocity.plus<span class="asBracket">(</span>forces.multEquals<span class="asBracket">(</span>dt2<span class="asBracket">))</span>;
+            curr.plusEquals<span class="asBracket">(</span>nv.multEquals<span class="asBracket">(</span>APEngine.damping<span class="asBracket">))</span>;
+            prev.copy<span class="asBracket">(</span>temp<span class="asBracket">)</span>;
+
+            clearForces<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Resets the collision state of the particle. This value is used in conjuction
+         * with the CollisionEvent.FIRST_COLLISION event.
+         */</span>    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> resetFirstCollision<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            firstCollision <span class="asOperator">=</span> <span class="asReserved">false</span>;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> initDisplay<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            displayObject.x <span class="asOperator">=</span> displayObjectOffset.x;
+            displayObject.y <span class="asOperator">=</span> displayObjectOffset.y;
+            displayObject.rotation <span class="asOperator">=</span> displayObjectRotation;
+            sprite.addChild<span class="asBracket">(</span>displayObject<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>    
+        
+            
+        <span class="asDoc">/**
+         * @private
+         */</span>        
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> getComponents<span class="asBracket">(</span>collisionNormal<span class="asOperator">:</span>Vector<span class="asBracket">)</span><span class="asOperator">:</span>Collision <span class="asBracket">{</span>
+            <span class="asVar">var</span> vel<span class="asOperator">:</span>Vector <span class="asOperator">=</span> velocity;
+            <span class="asVar">var</span> vdotn<span class="asOperator">:</span>Number <span class="asOperator">=</span> collisionNormal.dot<span class="asBracket">(</span>vel<span class="asBracket">)</span>;
+            collision.vn <span class="asOperator">=</span> collisionNormal.mult<span class="asBracket">(</span>vdotn<span class="asBracket">)</span>;
+            collision.vt <span class="asOperator">=</span> vel.minus<span class="asBracket">(</span>collision.vn<span class="asBracket">)</span>;    
+            <span class="asReserved">return</span> collision;
+        <span class="asBracket">}</span>
+    
+    
+        <span class="asDoc">/**
+         * @private
+         * 
+         * Make sure to align  the overriden versions of this method in
+         * WheelParticle
+         */</span>    
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> resolveCollision<span class="asBracket">(</span>mtd<span class="asOperator">:</span>Vector, vel<span class="asOperator">:</span>Vector, n<span class="asOperator">:</span>Vector, d<span class="asOperator">:</span>Number,
+                o<span class="asOperator">:</span>int, p<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+                    
+            testParticleEvents<span class="asBracket">(</span>p<span class="asBracket">)</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>fixed <span class="asOperator">||</span> <span class="asBracket">(</span><span class="asOperator">!</span> solid<span class="asBracket">)</span> <span class="asOperator">||</span> <span class="asBracket">(</span><span class="asOperator">!</span> p.solid<span class="asBracket">))</span> <span class="asReserved">return</span>;
+            
+            curr.copy<span class="asBracket">(</span>samp<span class="asBracket">)</span>;
+            curr.plusEquals<span class="asBracket">(</span>mtd<span class="asBracket">)</span>;
+            velocity <span class="asOperator">=</span> vel;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>        
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> testParticleEvents<span class="asBracket">(</span>p<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>        
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>hasEventListener<span class="asBracket">(</span>CollisionEvent.COLLIDE<span class="asBracket">))</span> <span class="asBracket">{</span>
+                dispatchEvent<span class="asBracket">(</span><span class="asReserved">new</span> CollisionEvent<span class="asBracket">(</span>
+                        CollisionEvent.COLLIDE, <span class="asReserved">false</span>, <span class="asReserved">false</span>, p<span class="asBracket">))</span>;
+            <span class="asBracket">}</span>
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>hasEventListener<span class="asBracket">(</span>CollisionEvent.FIRST_COLLIDE<span class="asBracket">)</span> <span class="asOperator">&amp;&amp;</span> <span class="asOperator">!</span> firstCollision<span class="asBracket">)</span> <span class="asBracket">{</span>
+                firstCollision <span class="asOperator">=</span> <span class="asReserved">true</span>;
+                dispatchEvent<span class="asBracket">(</span><span class="asReserved">new</span> CollisionEvent<span class="asBracket">(</span>
+                        CollisionEvent.FIRST_COLLIDE, <span class="asReserved">false</span>, <span class="asReserved">false</span>, p<span class="asBracket">))</span>;
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+            
+        <span class="asDoc">/**
+         * @private
+         */</span>        
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">get</span> invMass<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> <span class="asBracket">(</span>fixed<span class="asBracket">)</span> <span class="asOperator">?</span> 0 <span class="asOperator">:</span> _invMass; 
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Accumulates both the particle forces and the global forces
+         */</span>
+        <span class="asReserved">private</span> <span class="asFunction">function</span> accumulateForces<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asVar">var</span> f<span class="asOperator">:</span>IForce;
+            
+            <span class="asVar">var</span> len<span class="asOperator">:</span>int <span class="asOperator">=</span> forceList.length;
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> len; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                f <span class="asOperator">=</span> forceList<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                forces.plusEquals<span class="asBracket">(</span>f.getValue<span class="asBracket">(</span>_invMass<span class="asBracket">))</span>;
+            <span class="asBracket">}</span>
+
+            <span class="asComment">// JAGS suggestion
+</span>            len <span class="asOperator">=</span> forcePersistentList.length;
+            <span class="asReserved">for</span> <span class="asBracket">(</span>i <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> len; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                f <span class="asOperator">=</span> forcePersistentList<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                forces.plusEquals<span class="asBracket">(</span>f.getValue<span class="asBracket">(</span>_invMass<span class="asBracket">))</span>;
+            <span class="asBracket">}</span>
+                        
+            <span class="asVar">var</span> globalForces<span class="asOperator">:</span>Array <span class="asOperator">=</span> APEngine.forces;
+            len <span class="asOperator">=</span> globalForces.length;
+            <span class="asReserved">for</span> <span class="asBracket">(</span>i <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> len; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                f <span class="asOperator">=</span> globalForces<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                forces.plusEquals<span class="asBracket">(</span>f.getValue<span class="asBracket">(</span>_invMass<span class="asBracket">))</span>;
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Clears out all forces on the particle
+         */</span>
+        <span class="asReserved">private</span> <span class="asFunction">function</span> clearForces<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            forceList.length <span class="asOperator">=</span> 0;
+            forces.setTo<span class="asBracket">(</span>0,0<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>    
+<span class="asBracket">}</span></pre></body>
+</html>

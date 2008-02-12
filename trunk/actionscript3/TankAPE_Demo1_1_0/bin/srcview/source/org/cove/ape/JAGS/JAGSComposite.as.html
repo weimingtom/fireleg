@@ -1,0 +1,45 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>JAGSComposite.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span> org.cove.ape.JAGS
+<span class="asBracket">{</span>
+    <span class="asReserved">import</span> org.cove.ape.Composite;
+    <span class="asReserved">import</span> flash.utils.<span class="asOperator">*</span>;
+
+    <span class="asReserved">public</span> <span class="asClass">class</span> JAGSComposite <span class="asReserved">extends</span> Composite <span class="asReserved">implements</span> IExternalizable    <span class="asBracket">{</span>
+        <span class="asComment">// need names to keep track of these things
+</span>        <span class="asReserved">private</span> <span class="asVar">var</span> _name<span class="asOperator">:</span>String;
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> JAGSComposite<span class="asBracket">(</span>name<span class="asOperator">:</span>String <span class="asOperator">=</span> <span class="asString">&quot;&quot;</span><span class="asBracket">)</span>
+        <span class="asBracket">{</span>
+            <span class="asReserved">super</span><span class="asBracket">()</span>;
+            <span class="asReserved">this</span>._name <span class="asOperator">=</span> name;
+        <span class="asBracket">}</span>
+
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> writeExternal<span class="asBracket">(</span>output<span class="asOperator">:</span>IDataOutput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span>.writeExternal<span class="asBracket">(</span>output<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>_name<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+          
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> readExternal<span class="asBracket">(</span>input<span class="asOperator">:</span>IDataInput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>  
+            <span class="asReserved">super</span>.readExternal<span class="asBracket">(</span>input<span class="asBracket">)</span>;
+            _name <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> String;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> name<span class="asBracket">()</span><span class="asOperator">:</span>String <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _name;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> name<span class="asBracket">(</span>name<span class="asOperator">:</span>String<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">this</span>._name <span class="asOperator">=</span> name;
+        <span class="asBracket">}</span>
+        
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

@@ -1,0 +1,381 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>AbstractCollection.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asComment">/*
+Copyright (c) 2006, 2007 Alec Cove
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/</span>
+
+<span class="asComment">/*
+TODO:
+- get sprite() is duplicated in AbstractItem. Should be in some parent class.
+- checkCollisionsVsCollection and checkInternalCollisions methods use SpringConstraint. 
+  it should be AbstractConstraint but the isConnectedTo method is in SpringConstraint.
+- same deal with the paint() method here -- needs to test connected particles state 
+  using SpringConstraint methods but should really be AbstractConstraint. need to clear up
+  what an AbstractConstraint really means.
+- would an explicit cast be more efficient in the paint() method here?
+*/</span>
+
+<span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+    
+    <span class="asReserved">import</span> flash.display.Sprite;
+    <span class="asReserved">import</span> flash.utils.getQualifiedClassName;
+    <span class="asReserved">import</span> flash.utils.<span class="asOperator">*</span>;
+    
+    <span class="asDoc">/**
+     * The abstract base class for all grouping classes. 
+     * 
+     * &lt;p&gt;
+     * You should not instantiate this class directly -- instead use one of the subclasses.
+     * &lt;/p&gt;
+     */</span>    
+    <span class="asReserved">public</span> <span class="asClass">class</span> AbstractCollection <span class="asReserved">implements</span> IExternalizable <span class="asBracket">{</span>
+        
+    
+        <span class="asReserved">private</span> <span class="asVar">var</span> _sprite<span class="asOperator">:</span>Sprite;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _particles<span class="asOperator">:</span>Array <span class="asOperator">=</span> <span class="asReserved">new</span> Array<span class="asBracket">()</span>;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _constraints<span class="asOperator">:</span>Array <span class="asOperator">=</span> <span class="asReserved">new</span> Array<span class="asBracket">()</span>;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _isParented<span class="asOperator">:</span>Boolean;
+        
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> AbstractCollection<span class="asBracket">()</span> <span class="asBracket">{</span>
+            <span class="asReserved">if</span> <span class="asBracket">(</span>getQualifiedClassName<span class="asBracket">(</span><span class="asReserved">this</span><span class="asBracket">)</span> <span class="asOperator">==</span> <span class="asString">&quot;org.cove.ape::AbstractCollection&quot;</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">throw</span> <span class="asReserved">new</span> ArgumentError<span class="asBracket">(</span><span class="asString">&quot;AbstractCollection can&apos;t be instantiated directly&quot;</span><span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+            _isParented <span class="asOperator">=</span> <span class="asReserved">false</span>;
+            <span class="asComment">//_particles = new Array();
+</span>            <span class="asComment">//_constraints = new Array();
+</span>            
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> writeExternal<span class="asBracket">(</span>output<span class="asOperator">:</span>IDataOutput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            output.writeObject<span class="asBracket">(</span>_sprite<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>_particles<span class="asBracket">)</span>;
+            
+            <span class="asDoc">/**if (_constraints != null) {
+                output.writeInt(_constraints.length);
+                for (var j:int = 0; j &lt; _constraints.length; j++) {
+                    output.writeObject(_constraints);
+                }
+            }
+            else output.writeInt(0);
+             */</span>
+            output.writeObject<span class="asBracket">(</span>_constraints<span class="asBracket">)</span>;
+            
+            output.writeObject<span class="asBracket">(</span>_isParented<span class="asBracket">)</span>;            
+        <span class="asBracket">}</span>
+          
+        <span class="asReserved">public</span> <span class="asFunction">function</span> readExternal<span class="asBracket">(</span>input<span class="asOperator">:</span>IDataInput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>  
+            _sprite <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Sprite;
+            _particles <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Array;
+            
+            <span class="asComment">//var count:int = input.readInt();
+</span>            <span class="asComment">//for (var i:int = 0; i &lt; count; i++) {
+</span>                <span class="asComment">//_constraints.push(input.readObject() as AbstractConstraint);    
+</span>            <span class="asComment">//    _constraints.push(input.readObject());// as SpringConstraintParticle);
+</span>        <span class="asComment">//    }
+</span>            _constraints <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Array;
+            _isParented <span class="asOperator">=</span> input.readBoolean<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>        
+        
+        
+        <span class="asDoc">/**
+         * The Array of all AbstractParticle instances added to the AbstractCollection
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> particles<span class="asBracket">()</span><span class="asOperator">:</span>Array <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _particles;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * The Array of all AbstractConstraint instances added to the AbstractCollection
+         */</span>    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> constraints<span class="asBracket">()</span><span class="asOperator">:</span>Array <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _constraints;    
+        <span class="asBracket">}</span>
+
+        
+        <span class="asDoc">/**
+         * Adds an AbstractParticle to the AbstractCollection.
+         * 
+         * @param p The particle to be added.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> addParticle<span class="asBracket">(</span>p<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            particles.push<span class="asBracket">(</span>p<span class="asBracket">)</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>isParented<span class="asBracket">)</span> p.init<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Removes an AbstractParticle from the AbstractCollection.
+         * 
+         * @param p The particle to be removed.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> removeParticle<span class="asBracket">(</span>p<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asVar">var</span> ppos<span class="asOperator">:</span>int <span class="asOperator">=</span> particles.indexOf<span class="asBracket">(</span>p<span class="asBracket">)</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>ppos <span class="asOperator">==</span> <span class="asOperator">-</span>1<span class="asBracket">)</span> <span class="asReserved">return</span>;
+            particles.splice<span class="asBracket">(</span>ppos, 1<span class="asBracket">)</span>;
+            p.cleanup<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Adds a constraint to the Collection.
+         * 
+         * @param c The constraint to be added.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> addConstraint<span class="asBracket">(</span>c<span class="asOperator">:</span>AbstractConstraint<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            constraints.push<span class="asBracket">(</span>c<span class="asBracket">)</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>isParented<span class="asBracket">)</span> c.init<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * Removes a constraint from the Collection.
+         * 
+         * @param c The constraint to be removed.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> removeConstraint<span class="asBracket">(</span>c<span class="asOperator">:</span>AbstractConstraint<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asVar">var</span> cpos<span class="asOperator">:</span>int <span class="asOperator">=</span> constraints.indexOf<span class="asBracket">(</span>c<span class="asBracket">)</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>cpos <span class="asOperator">==</span> <span class="asOperator">-</span>1<span class="asBracket">)</span> <span class="asReserved">return</span>;
+            constraints.splice<span class="asBracket">(</span>cpos, 1<span class="asBracket">)</span>;
+            c.cleanup<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Initializes every member of this AbstractCollection by in turn calling 
+         * each members &lt;code&gt;init()&lt;/code&gt; method.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> init<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> particles.length; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                particles<span class="asBracket">[</span>i<span class="asBracket">]</span>.init<span class="asBracket">()</span>;    
+            <span class="asBracket">}</span>
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>constraints <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">for</span> <span class="asBracket">(</span>i <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> constraints.length; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    constraints<span class="asBracket">[</span>i<span class="asBracket">]</span>.init<span class="asBracket">()</span>;
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+                
+        <span class="asDoc">/**
+         * paints every member of this AbstractCollection by calling each members
+         * &lt;code&gt;paint()&lt;/code&gt; method.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> paint<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asVar">var</span> p<span class="asOperator">:</span>AbstractParticle;
+            <span class="asVar">var</span> len<span class="asOperator">:</span>int <span class="asOperator">=</span> _particles.length;
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> len; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                p <span class="asOperator">=</span> _particles<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                <span class="asReserved">if</span> <span class="asBracket">((</span><span class="asOperator">!</span> p.fixed<span class="asBracket">)</span> <span class="asOperator">||</span> p.alwaysRepaint<span class="asBracket">)</span> p.paint<span class="asBracket">()</span>;    
+            <span class="asBracket">}</span>
+            
+            <span class="asVar">var</span> c<span class="asOperator">:</span>SpringConstraint;
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>_constraints <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                len <span class="asOperator">=</span> _constraints.length;
+                <span class="asReserved">for</span> <span class="asBracket">(</span>i <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> len; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    c <span class="asOperator">=</span> _constraints<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                    <span class="asReserved">if</span> <span class="asBracket">((</span><span class="asOperator">!</span> c.fixed<span class="asBracket">)</span> <span class="asOperator">||</span> c.alwaysRepaint<span class="asBracket">)</span> c.paint<span class="asBracket">()</span>;
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Calls the &lt;code&gt;cleanup()&lt;/code&gt; method of every member of this AbstractCollection.
+         * The cleanup() method is called automatically when an AbstractCollection is removed
+         * from its parent.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> cleanup<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> particles.length; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                particles<span class="asBracket">[</span>i<span class="asBracket">]</span>.cleanup<span class="asBracket">()</span>;    
+            <span class="asBracket">}</span>
+            <span class="asReserved">for</span> <span class="asBracket">(</span>i <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> constraints.length; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                constraints<span class="asBracket">[</span>i<span class="asBracket">]</span>.cleanup<span class="asBracket">()</span>;
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+                
+        
+        <span class="asDoc">/**
+         * Provides a Sprite to use as a container for drawing or adding children. When the
+         * sprite is requested for the first time it is automatically added to the global
+         * container in the APEngine class.
+         */</span>    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> sprite<span class="asBracket">()</span><span class="asOperator">:</span>Sprite <span class="asBracket">{</span>
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>_sprite <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asReserved">return</span> _sprite;
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>APEngine.container <span class="asOperator">==</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">throw</span> <span class="asReserved">new</span> Error<span class="asBracket">(</span><span class="asString">&quot;The container property of the APEngine class has not been set&quot;</span><span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+            
+            _sprite <span class="asOperator">=</span> <span class="asReserved">new</span> Sprite<span class="asBracket">()</span>;
+            APEngine.container.addChild<span class="asBracket">(</span>_sprite<span class="asBracket">)</span>;
+            <span class="asReserved">return</span> _sprite;
+        <span class="asBracket">}</span>
+        
+    
+        <span class="asDoc">/**
+         * Returns an array of every particle and constraint added to the AbstractCollection.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> getAll<span class="asBracket">()</span><span class="asOperator">:</span>Array <span class="asBracket">{</span>
+            <span class="asReserved">return</span> particles.concat<span class="asBracket">(</span>constraints<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>    
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">get</span> isParented<span class="asBracket">()</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _isParented;
+        <span class="asBracket">}</span>    
+
+
+        <span class="asDoc">/**
+         * @private
+         */</span>        
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">set</span> isParented<span class="asBracket">(</span>b<span class="asOperator">:</span>Boolean<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _isParented <span class="asOperator">=</span> b;
+        <span class="asBracket">}</span>    
+        
+                                
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> integrate<span class="asBracket">(</span>dt2<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asVar">var</span> len<span class="asOperator">:</span>int <span class="asOperator">=</span> _particles.length;
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> len; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asVar">var</span> p<span class="asOperator">:</span>AbstractParticle <span class="asOperator">=</span> _particles<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                p.update<span class="asBracket">(</span>dt2<span class="asBracket">)</span>;    
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>        
+        
+            
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> satisfyConstraints<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">if</span> <span class="asBracket">(</span>_constraints <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asVar">var</span> len<span class="asOperator">:</span>int <span class="asOperator">=</span> _constraints.length;
+                <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> len; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    <span class="asVar">var</span> c<span class="asOperator">:</span>AbstractConstraint <span class="asOperator">=</span> _constraints<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                    c.resolve<span class="asBracket">()</span>;    
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>            
+        
+
+        <span class="asDoc">/**
+         * @private
+         */</span>    
+         <span class="asReserved">internal</span> <span class="asFunction">function</span> checkInternalCollisions<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+         
+            <span class="asComment">// every particle in this AbstractCollection
+</span>            <span class="asVar">var</span> plen<span class="asOperator">:</span>int <span class="asOperator">=</span> _particles.length;
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> j<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; j <span class="asOperator">&lt;</span> plen; j<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                
+                <span class="asVar">var</span> pa<span class="asOperator">:</span>AbstractParticle <span class="asOperator">=</span> _particles<span class="asBracket">[</span>j<span class="asBracket">]</span>;
+                <span class="asReserved">if</span> <span class="asBracket">(</span>pa <span class="asOperator">==</span> <span class="asReserved">null</span> <span class="asOperator">||</span> <span class="asOperator">!</span> pa.collidable<span class="asBracket">)</span> <span class="asReserved">continue</span>;
+                
+                <span class="asComment">// ...vs every other particle in this AbstractCollection
+</span>                <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> j <span class="asOperator">+</span> 1; i <span class="asOperator">&lt;</span> plen; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    <span class="asVar">var</span> pb<span class="asOperator">:</span>AbstractParticle <span class="asOperator">=</span> _particles<span class="asBracket">[</span>i<span class="asBracket">]</span>;
+                    <span class="asReserved">if</span> <span class="asBracket">(</span>pb <span class="asOperator">!=</span> <span class="asReserved">null</span> <span class="asOperator">&amp;&amp;</span> pb.collidable<span class="asBracket">)</span> CollisionDetector.test<span class="asBracket">(</span>pa, pb<span class="asBracket">)</span>;
+                <span class="asBracket">}</span>
+                
+                <span class="asComment">// ...vs every other constraint in this AbstractCollection
+</span>                <span class="asVar">var</span> clen<span class="asOperator">:</span>int <span class="asOperator">=</span> _constraints.length;
+                <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> n<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; n <span class="asOperator">&lt;</span> clen; n<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    <span class="asVar">var</span> c<span class="asOperator">:</span>SpringConstraint <span class="asOperator">=</span> _constraints<span class="asBracket">[</span>n<span class="asBracket">]</span>;
+                    <span class="asReserved">if</span> <span class="asBracket">(</span>c <span class="asOperator">!=</span> <span class="asReserved">null</span> <span class="asOperator">&amp;&amp;</span> c.collidable <span class="asOperator">&amp;&amp;</span> <span class="asOperator">!</span> c.isConnectedTo<span class="asBracket">(</span>pa<span class="asBracket">))</span> <span class="asBracket">{</span>
+                        c.scp.updatePosition<span class="asBracket">()</span>;
+                        CollisionDetector.test<span class="asBracket">(</span>pa, c.scp<span class="asBracket">)</span>;
+                    <span class="asBracket">}</span>
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+    
+    
+        <span class="asDoc">/**
+         * @private
+         */</span>    
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> checkCollisionsVsCollection<span class="asBracket">(</span>ac<span class="asOperator">:</span>AbstractCollection<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asComment">// every particle in this collection...
+</span>            <span class="asVar">var</span> plen<span class="asOperator">:</span>int <span class="asOperator">=</span> _particles.length;
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> j<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; j <span class="asOperator">&lt;</span> plen; j<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                
+                <span class="asVar">var</span> pga<span class="asOperator">:</span>AbstractParticle <span class="asOperator">=</span> _particles<span class="asBracket">[</span>j<span class="asBracket">]</span>;
+                <span class="asReserved">if</span> <span class="asBracket">(</span>pga <span class="asOperator">==</span> <span class="asReserved">null</span> <span class="asOperator">||</span> <span class="asOperator">!</span> pga.collidable<span class="asBracket">)</span> <span class="asReserved">continue</span>;
+                
+                <span class="asComment">// ...vs every particle in the other collection
+</span>                <span class="asVar">var</span> acplen<span class="asOperator">:</span>int <span class="asOperator">=</span> ac.particles.length;
+                <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> x<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; x <span class="asOperator">&lt;</span> acplen; x<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    <span class="asVar">var</span> pgb<span class="asOperator">:</span>AbstractParticle <span class="asOperator">=</span> ac.particles<span class="asBracket">[</span>x<span class="asBracket">]</span>;
+                    <span class="asReserved">if</span> <span class="asBracket">(</span>pgb <span class="asOperator">!=</span> <span class="asReserved">null</span> <span class="asOperator">&amp;&amp;</span> pgb.collidable<span class="asBracket">)</span> CollisionDetector.test<span class="asBracket">(</span>pga, pgb<span class="asBracket">)</span>;
+                <span class="asBracket">}</span>
+                <span class="asComment">// ...vs every constraint in the other collection
+</span>                <span class="asVar">var</span> acclen<span class="asOperator">:</span>int <span class="asOperator">=</span> ac.constraints.length;
+                <span class="asReserved">for</span> <span class="asBracket">(</span>x <span class="asOperator">=</span> 0; x <span class="asOperator">&lt;</span> acclen; x<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    <span class="asVar">var</span> cgb<span class="asOperator">:</span>SpringConstraint <span class="asOperator">=</span> ac.constraints<span class="asBracket">[</span>x<span class="asBracket">]</span>;
+                    <span class="asReserved">if</span> <span class="asBracket">(</span>cgb <span class="asOperator">!=</span> <span class="asReserved">null</span> <span class="asOperator">&amp;&amp;</span> cgb.collidable <span class="asOperator">&amp;&amp;</span> <span class="asOperator">!</span> cgb.isConnectedTo<span class="asBracket">(</span>pga<span class="asBracket">))</span> <span class="asBracket">{</span>
+                        cgb.scp.updatePosition<span class="asBracket">()</span>;
+                        CollisionDetector.test<span class="asBracket">(</span>pga, cgb.scp<span class="asBracket">)</span>;
+                    <span class="asBracket">}</span>
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>
+            
+            <span class="asComment">// every constraint in this collection...
+</span>            <span class="asReserved">if</span> <span class="asBracket">(</span>_constraints <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+            <span class="asVar">var</span> clen<span class="asOperator">:</span>int <span class="asOperator">=</span> _constraints.length;
+                <span class="asReserved">for</span> <span class="asBracket">(</span>j <span class="asOperator">=</span> 0; j <span class="asOperator">&lt;</span> clen; j<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    <span class="asVar">var</span> cga<span class="asOperator">:</span>SpringConstraint <span class="asOperator">=</span> _constraints<span class="asBracket">[</span>j<span class="asBracket">]</span>;
+                    <span class="asReserved">if</span> <span class="asBracket">(</span>cga <span class="asOperator">==</span> <span class="asReserved">null</span> <span class="asOperator">||</span> <span class="asOperator">!</span> cga.collidable<span class="asBracket">)</span> <span class="asReserved">continue</span>;
+                    
+                    <span class="asComment">// ...vs every particle in the other collection
+</span>                    acplen <span class="asOperator">=</span> ac.particles.length;
+                    <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> n<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; n <span class="asOperator">&lt;</span> acplen; n<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                        pgb <span class="asOperator">=</span> ac.particles<span class="asBracket">[</span>n<span class="asBracket">]</span>;
+                        <span class="asReserved">if</span> <span class="asBracket">(</span>pgb <span class="asOperator">!=</span> <span class="asReserved">null</span> <span class="asOperator">&amp;&amp;</span> pgb.collidable <span class="asOperator">&amp;&amp;</span> <span class="asOperator">!</span> cga.isConnectedTo<span class="asBracket">(</span>pgb<span class="asBracket">))</span> <span class="asBracket">{</span>
+                            cga.scp.updatePosition<span class="asBracket">()</span>;
+                            CollisionDetector.test<span class="asBracket">(</span>pgb, cga.scp<span class="asBracket">)</span>;
+                        <span class="asBracket">}</span>
+                    <span class="asBracket">}</span>
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>            
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span>
+
+
+</pre></body>
+</html>

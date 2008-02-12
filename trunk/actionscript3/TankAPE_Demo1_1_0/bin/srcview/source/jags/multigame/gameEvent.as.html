@@ -1,0 +1,40 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>gameEvent.as</title>
+<link rel="stylesheet" type="text/css" href="../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span> jags.multigame
+<span class="asBracket">{</span>
+    <span class="asReserved">import</span> flash.events.Event;
+
+    <span class="asReserved">public</span> <span class="asClass">class</span> CommandEvent <span class="asReserved">extends</span> Event
+    <span class="asBracket">{</span>
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asReserved">const</span> PLACE_IT<span class="asOperator">:</span>String <span class="asOperator">=</span> <span class="asString">&quot;place&quot;</span>;
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asReserved">const</span> CREATE_IT<span class="asOperator">:</span>String <span class="asOperator">=</span> <span class="asString">&quot;create&quot;</span>;
+
+        <span class="asReserved">public</span> <span class="asVar">var</span> x<span class="asOperator">:</span>uint;
+        <span class="asReserved">public</span> <span class="asVar">var</span> y<span class="asOperator">:</span>uint;
+        <span class="asReserved">private</span> <span class="asVar">var</span> name<span class="asOperator">:</span>String;
+        <span class="asReserved">private</span> <span class="asVar">var</span> typeOf<span class="asOperator">:</span>String    
+        <span class="asReserved">private</span> <span class="asVar">var</span>    timeStamp<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asOperator">-</span>1;
+        <span class="asReserved">private</span> <span class="asVar">var</span> from<span class="asOperator">:</span>String <span class="asOperator">=</span> <span class="asString">&quot;&quot;</span>;
+        
+        <span class="asComment">// Create particle type with x,y coords
+</span>        <span class="asReserved">public</span> <span class="asFunction">function</span> MessageEvent<span class="asBracket">(</span>command<span class="asOperator">:</span>String, typeOf<span class="asOperator">:</span>String, name<span class="asOperator">:</span>String, x<span class="asOperator">:</span>uint, y<span class="asOperator">:</span>uint, timeStamp<span class="asOperator">:</span>Number<span class="asBracket">)</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span><span class="asBracket">(</span>command, <span class="asReserved">false</span>, <span class="asReserved">false</span><span class="asBracket">)</span>;
+            
+            x <span class="asOperator">=</span> x;
+            y <span class="asOperator">=</span> y;
+            timeStamp <span class="asOperator">=</span> timeStamp;
+            name <span class="asOperator">=</span> name;
+            typeOf <span class="asOperator">=</span> typeOf;
+        <span class="asBracket">}</span>
+
+        
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

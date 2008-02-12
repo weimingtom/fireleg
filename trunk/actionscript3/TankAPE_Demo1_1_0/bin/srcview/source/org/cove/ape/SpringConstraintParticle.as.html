@@ -1,0 +1,503 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>SpringConstraintParticle.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asComment">/*
+Copyright (c) 2006, 2007 Alec Cove
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/</span>
+
+<span class="asComment">/*
+TODO:
+
+- scale the post collision velocity by both the position *and* mass of each particle. 
+  currently only the position and average inverse mass is used. as with the velocity,
+  it might be a problem since the contact point is not available when the mass is 
+  needed.
+- review all p1 p2 getters (eg get mass). can it be stored instead of computed everytime?
+- consider if the API should let the user set the SCP&apos;s properties directly. elasticity, 
+  friction, mass, etc are all inherited from the attached particles
+- consider a more accurate velocity getter. should use a parameterized value
+  to scale the velocity relative to the contact point. one problem is the velocity is
+  needed before the contact point is established.
+- setCorners should be revisited.
+- getContactPointParam should probably belong to the rectangleparticle and circleparticle  
+  classes. also the functions respective to each, for better OOD
+- clean up resolveCollision with submethods
+- this class is internal, why are the methods public?
+*/</span>
+
+<span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+    
+    <span class="asReserved">import</span> flash.display.Sprite;
+    <span class="asReserved">import</span> flash.display.DisplayObject;
+    <span class="asReserved">import</span> flash.utils.<span class="asOperator">*</span>;
+    
+    <span class="asReserved">public</span> <span class="asClass">class</span> SpringConstraintParticle     <span class="asReserved">extends</span> RectangleParticle 
+                                            <span class="asReserved">implements</span> IExternalizable <span class="asBracket">{</span>
+        
+        <span class="asReserved">internal</span> <span class="asVar">var</span> parent<span class="asOperator">:</span>SpringConstraint;
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> p1<span class="asOperator">:</span>AbstractParticle;
+        <span class="asReserved">private</span> <span class="asVar">var</span> p2<span class="asOperator">:</span>AbstractParticle;
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> avgVelocity<span class="asOperator">:</span>Vector;
+        <span class="asReserved">private</span> <span class="asVar">var</span> lambda<span class="asOperator">:</span>Vector;
+        <span class="asReserved">private</span> <span class="asVar">var</span> scaleToLength<span class="asOperator">:</span>Boolean;
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> rca<span class="asOperator">:</span>Vector;
+        <span class="asReserved">private</span> <span class="asVar">var</span> rcb<span class="asOperator">:</span>Vector;
+        <span class="asReserved">private</span> <span class="asVar">var</span> s<span class="asOperator">:</span>Number;
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> _rectScale<span class="asOperator">:</span>Number;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _rectHeight<span class="asOperator">:</span>Number;
+        <span class="asReserved">private</span> <span class="asVar">var</span> _fixedEndLimit<span class="asOperator">:</span>Number;
+                
+        <span class="asReserved">public</span> <span class="asFunction">function</span> SpringConstraintParticle<span class="asBracket">(</span>
+                p1<span class="asOperator">:</span>AbstractParticle <span class="asOperator">=</span> <span class="asReserved">null</span>, 
+                p2<span class="asOperator">:</span>AbstractParticle <span class="asOperator">=</span> <span class="asReserved">null</span>, 
+                p<span class="asOperator">:</span>SpringConstraint <span class="asOperator">=</span> <span class="asReserved">null</span>, 
+                rectHeight<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0, 
+                rectScale<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0,
+                scaleToLength<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+            
+            <span class="asReserved">super</span><span class="asBracket">(</span>0,0,0,0,0,<span class="asReserved">false</span><span class="asBracket">)</span>;
+            
+            <span class="asReserved">this</span>.p1 <span class="asOperator">=</span> p1;
+            <span class="asReserved">this</span>.p2 <span class="asOperator">=</span> p2;
+            
+            lambda <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>0,0<span class="asBracket">)</span>;
+            avgVelocity <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>0,0<span class="asBracket">)</span>;
+            
+            parent <span class="asOperator">=</span> p;
+            <span class="asReserved">this</span>.rectScale <span class="asOperator">=</span> rectScale;
+            <span class="asReserved">this</span>.rectHeight <span class="asOperator">=</span> rectHeight;
+            <span class="asReserved">this</span>.scaleToLength <span class="asOperator">=</span> scaleToLength;
+            
+            fixedEndLimit <span class="asOperator">=</span> 0;
+            rca <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">()</span>;
+            rcb <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> writeExternal<span class="asBracket">(</span>output<span class="asOperator">:</span>IDataOutput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span>.writeExternal<span class="asBracket">(</span>output<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>SpringConstraint<span class="asBracket">)</span>;
+            
+            output.writeObject<span class="asBracket">(</span>AbstractParticle<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>AbstractParticle<span class="asBracket">)</span>;
+                    
+            output.writeObject<span class="asBracket">(</span>Vector<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>Vector<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>Boolean<span class="asBracket">)</span>;
+                    
+            output.writeObject<span class="asBracket">(</span>Vector<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>Vector<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>Number<span class="asBracket">)</span>;
+                    
+            output.writeObject<span class="asBracket">(</span>Number<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>Number<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>Number<span class="asBracket">)</span>;            
+        <span class="asBracket">}</span>
+          
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> readExternal<span class="asBracket">(</span>input<span class="asOperator">:</span>IDataInput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>  
+            <span class="asReserved">super</span>.readExternal<span class="asBracket">(</span>input<span class="asBracket">)</span>;
+            
+            parent <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> SpringConstraint;
+        
+            p1 <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> AbstractParticle;
+            p2 <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> AbstractParticle;
+        
+            avgVelocity <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            lambda <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            scaleToLength <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Boolean;
+        
+            rca <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            rcb <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            s <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+        
+            _rectScale <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+            _rectHeight <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+            _fixedEndLimit <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;            
+        <span class="asBracket">}</span>        
+            
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">set</span> rectScale<span class="asBracket">(</span>s<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _rectScale <span class="asOperator">=</span> s;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>        
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">get</span> rectScale<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _rectScale;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">set</span> rectHeight<span class="asBracket">(</span>r<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _rectHeight <span class="asOperator">=</span> r;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>    
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">get</span> rectHeight<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _rectHeight;
+        <span class="asBracket">}</span>
+
+        
+        <span class="asDoc">/**
+         * For cases when the SpringConstraint is both collidable and only one of the
+         * two end particles are fixed, this value will dispose of collisions near the
+         * fixed particle, to correct for situations where the collision could never be
+         * resolved.
+         */</span>    
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">set</span> fixedEndLimit<span class="asBracket">(</span>f<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _fixedEndLimit <span class="asOperator">=</span> f;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>    
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">get</span> fixedEndLimit<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _fixedEndLimit;
+        <span class="asBracket">}</span>
+    
+    
+        <span class="asDoc">/**
+         * returns the average mass of the two connected particles
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> <span class="asReserved">get</span> mass<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> <span class="asBracket">(</span>p1.mass <span class="asOperator">+</span> p2.mass<span class="asBracket">)</span> <span class="asOperator">/</span> 2; 
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * returns the average elasticity of the two connected particles
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> <span class="asReserved">get</span> elasticity<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> <span class="asBracket">(</span>p1.elasticity <span class="asOperator">+</span> p2.elasticity<span class="asBracket">)</span> <span class="asOperator">/</span> 2; 
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * returns the average friction of the two connected particles
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> <span class="asReserved">get</span> friction<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> <span class="asBracket">(</span>p1.friction <span class="asOperator">+</span> p2.friction<span class="asBracket">)</span> <span class="asOperator">/</span> 2; 
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * returns the average velocity of the two connected particles
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> <span class="asReserved">get</span> velocity<span class="asBracket">()</span><span class="asOperator">:</span>Vector <span class="asBracket">{</span>
+            <span class="asVar">var</span> p1v<span class="asOperator">:</span>Vector <span class="asOperator">=</span>  p1.velocity;
+            <span class="asVar">var</span> p2v<span class="asOperator">:</span>Vector <span class="asOperator">=</span>  p2.velocity;
+            
+            avgVelocity.setTo<span class="asBracket">(((</span>p1v.x <span class="asOperator">+</span> p2v.x<span class="asBracket">)</span> <span class="asOperator">/</span> 2<span class="asBracket">)</span>, <span class="asBracket">((</span>p1v.y <span class="asOperator">+</span> p2v.y<span class="asBracket">)</span> <span class="asOperator">/</span> 2<span class="asBracket">))</span>;
+            <span class="asReserved">return</span> avgVelocity;
+        <span class="asBracket">}</span>    
+        
+        
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> init<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">if</span> <span class="asBracket">(</span>displayObject <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                initDisplay<span class="asBracket">()</span>;
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asBracket">{</span>
+                <span class="asVar">var</span> inner<span class="asOperator">:</span>Sprite <span class="asOperator">=</span> <span class="asReserved">new</span> Sprite<span class="asBracket">()</span>;
+                parent.sprite.addChild<span class="asBracket">(</span>inner<span class="asBracket">)</span>;
+                inner.name <span class="asOperator">=</span> <span class="asString">&quot;inner&quot;</span>;
+                            
+                <span class="asVar">var</span> w<span class="asOperator">:</span>Number <span class="asOperator">=</span> parent.currLength <span class="asOperator">*</span> rectScale;
+                <span class="asVar">var</span> h<span class="asOperator">:</span>Number <span class="asOperator">=</span> rectHeight;
+                
+                inner.graphics.clear<span class="asBracket">()</span>;
+                inner.graphics.lineStyle<span class="asBracket">(</span>
+                        parent.lineThickness, parent.lineColor, parent.lineAlpha<span class="asBracket">)</span>;
+                inner.graphics.beginFill<span class="asBracket">(</span>parent.fillColor, parent.fillAlpha<span class="asBracket">)</span>;
+                inner.graphics.drawRect<span class="asBracket">(</span><span class="asOperator">-</span>w<span class="asOperator">/</span>2, <span class="asOperator">-</span>h<span class="asOperator">/</span>2, w, h<span class="asBracket">)</span>;
+                inner.graphics.endFill<span class="asBracket">()</span>;
+            <span class="asBracket">}</span>
+            paint<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+
+        
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> paint<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asVar">var</span> c<span class="asOperator">:</span>Vector <span class="asOperator">=</span> parent.center;
+            <span class="asVar">var</span> s<span class="asOperator">:</span>Sprite <span class="asOperator">=</span> parent.sprite;
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>scaleToLength<span class="asBracket">)</span> <span class="asBracket">{</span>
+                s.getChildByName<span class="asBracket">(</span><span class="asString">&quot;inner&quot;</span><span class="asBracket">)</span>.width <span class="asOperator">=</span> parent.currLength <span class="asOperator">*</span> rectScale;
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>displayObject <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                s.getChildByName<span class="asBracket">(</span><span class="asString">&quot;inner&quot;</span><span class="asBracket">)</span>.width <span class="asOperator">=</span> parent.restLength <span class="asOperator">*</span> rectScale;
+            <span class="asBracket">}</span>
+            s.x <span class="asOperator">=</span> c.x; 
+            s.y <span class="asOperator">=</span> c.y;
+            s.rotation <span class="asOperator">=</span> parent.angle;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">internal</span> <span class="asReserved">override</span> <span class="asFunction">function</span> initDisplay<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            displayObject.x <span class="asOperator">=</span> displayObjectOffset.x;
+            displayObject.y <span class="asOperator">=</span> displayObjectOffset.y;
+            displayObject.rotation <span class="asOperator">=</span> displayObjectRotation;
+            
+            <span class="asVar">var</span> inner<span class="asOperator">:</span>Sprite <span class="asOperator">=</span> <span class="asReserved">new</span> Sprite<span class="asBracket">()</span>;
+            inner.name <span class="asOperator">=</span> <span class="asString">&quot;inner&quot;</span>;
+            
+            inner.addChild<span class="asBracket">(</span>displayObject<span class="asBracket">)</span>;
+            parent.sprite.addChild<span class="asBracket">(</span>inner<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>    
+        
+                
+       <span class="asDoc">/**
+         * @private
+         * returns the average inverse mass.
+         */</span>        
+        <span class="asReserved">internal</span> <span class="asReserved">override</span> <span class="asFunction">function</span> <span class="asReserved">get</span> invMass<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">if</span> <span class="asBracket">(</span>p1.fixed <span class="asOperator">&amp;&amp;</span> p2.fixed<span class="asBracket">)</span> <span class="asReserved">return</span> 0;
+            <span class="asReserved">return</span> 1 <span class="asOperator">/</span> <span class="asBracket">((</span>p1.mass <span class="asOperator">+</span> p2.mass<span class="asBracket">)</span> <span class="asOperator">/</span> 2<span class="asBracket">)</span>;  
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Returns the value of the parent SpringConstraint &lt;code&gt;fixed&lt;/code&gt; property.
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> <span class="asReserved">get</span> fixed<span class="asBracket">()</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            <span class="asReserved">return</span> parent.fixed;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * called only on collision
+         */</span>
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> updatePosition<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asVar">var</span> c<span class="asOperator">:</span>Vector <span class="asOperator">=</span> parent.center;
+            curr.setTo<span class="asBracket">(</span>c.x, c.y<span class="asBracket">)</span>;
+            
+            width <span class="asOperator">=</span> <span class="asBracket">(</span>scaleToLength<span class="asBracket">)</span> <span class="asOperator">?</span> 
+                    parent.currLength <span class="asOperator">*</span> rectScale <span class="asOperator">:</span> 
+                    parent.restLength <span class="asOperator">*</span> rectScale;
+            height <span class="asOperator">=</span> rectHeight;
+            radian <span class="asOperator">=</span> parent.radian;
+        <span class="asBracket">}</span>
+        
+            
+        <span class="asReserved">internal</span> <span class="asReserved">override</span> <span class="asFunction">function</span> resolveCollision<span class="asBracket">(</span>mtd<span class="asOperator">:</span>Vector, vel<span class="asOperator">:</span>Vector, n<span class="asOperator">:</span>Vector, 
+                d<span class="asOperator">:</span>Number, o<span class="asOperator">:</span>int, p<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+                
+            testParticleEvents<span class="asBracket">(</span>p<span class="asBracket">)</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>fixed <span class="asOperator">||</span> <span class="asOperator">!</span> p.solid<span class="asBracket">)</span> <span class="asReserved">return</span>;
+            
+            <span class="asVar">var</span> t<span class="asOperator">:</span>Number <span class="asOperator">=</span> getContactPointParam<span class="asBracket">(</span>p<span class="asBracket">)</span>;
+            <span class="asVar">var</span> c1<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asBracket">(</span>1 <span class="asOperator">-</span> t<span class="asBracket">)</span>;
+            <span class="asVar">var</span> c2<span class="asOperator">:</span>Number <span class="asOperator">=</span> t;
+            
+            <span class="asComment">// if one is fixed then move the other particle the entire way out of 
+</span>            <span class="asComment">// collision. also, dispose of collisions at the sides of the scp. The higher
+</span>            <span class="asComment">// the fixedEndLimit value, the more of the scp not be effected by collision. 
+</span>            <span class="asReserved">if</span> <span class="asBracket">(</span>p1.fixed<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">if</span> <span class="asBracket">(</span>c2 <span class="asOperator">&lt;=</span> fixedEndLimit<span class="asBracket">)</span> <span class="asReserved">return</span>;
+                lambda.setTo<span class="asBracket">(</span>mtd.x <span class="asOperator">/</span> c2, mtd.y <span class="asOperator">/</span> c2<span class="asBracket">)</span>;
+                p2.curr.plusEquals<span class="asBracket">(</span>lambda<span class="asBracket">)</span>;
+                p2.velocity <span class="asOperator">=</span> vel;
+
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>p2.fixed<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">if</span> <span class="asBracket">(</span>c1 <span class="asOperator">&lt;=</span> fixedEndLimit<span class="asBracket">)</span> <span class="asReserved">return</span>;
+                lambda.setTo<span class="asBracket">(</span>mtd.x <span class="asOperator">/</span> c1, mtd.y <span class="asOperator">/</span> c1<span class="asBracket">)</span>;
+                p1.curr.plusEquals<span class="asBracket">(</span>lambda<span class="asBracket">)</span>;
+                p1.velocity <span class="asOperator">=</span> vel;        
+
+            <span class="asComment">// else both non fixed - move proportionally out of collision
+</span>            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asBracket">{</span> 
+                <span class="asVar">var</span> denom<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asBracket">(</span>c1 <span class="asOperator">*</span> c1 <span class="asOperator">+</span> c2 <span class="asOperator">*</span> c2<span class="asBracket">)</span>;
+                <span class="asReserved">if</span> <span class="asBracket">(</span>denom <span class="asOperator">==</span> 0<span class="asBracket">)</span> <span class="asReserved">return</span>;
+                lambda.setTo<span class="asBracket">(</span>mtd.x <span class="asOperator">/</span> denom, mtd.y <span class="asOperator">/</span> denom<span class="asBracket">)</span>;
+            
+                p1.curr.plusEquals<span class="asBracket">(</span>lambda.mult<span class="asBracket">(</span>c1<span class="asBracket">))</span>;
+                p2.curr.plusEquals<span class="asBracket">(</span>lambda.mult<span class="asBracket">(</span>c2<span class="asBracket">))</span>;
+            
+                <span class="asComment">// if collision is in the middle of SCP set the velocity of both end 
+</span>                <span class="asComment">// particles
+</span>                <span class="asReserved">if</span> <span class="asBracket">(</span>t <span class="asOperator">==</span> 0.5<span class="asBracket">)</span> <span class="asBracket">{</span>
+                    p1.velocity <span class="asOperator">=</span> vel;
+                    p2.velocity <span class="asOperator">=</span> vel;
+                
+                <span class="asComment">// otherwise change the velocity of the particle closest to contact
+</span>                <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asBracket">{</span>
+                    <span class="asVar">var</span> corrParticle<span class="asOperator">:</span>AbstractParticle <span class="asOperator">=</span> <span class="asBracket">(</span>t <span class="asOperator">&lt;</span> 0.5<span class="asBracket">)</span> <span class="asOperator">?</span> p1 <span class="asOperator">:</span> p2;
+                    corrParticle.velocity <span class="asOperator">=</span> vel;
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * given point c, returns a parameterized location on this SCP. Note
+         * this is just treating the SCP as if it were a line segment (ab).
+         */</span>
+        <span class="asReserved">private</span> <span class="asFunction">function</span> closestParamPoint<span class="asBracket">(</span>c<span class="asOperator">:</span>Vector<span class="asBracket">)</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asVar">var</span> ab<span class="asOperator">:</span>Vector <span class="asOperator">=</span> p2.curr.minus<span class="asBracket">(</span>p1.curr<span class="asBracket">)</span>;
+            <span class="asVar">var</span> t<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asBracket">(</span>ab.dot<span class="asBracket">(</span>c.minus<span class="asBracket">(</span>p1.curr<span class="asBracket">)))</span> <span class="asOperator">/</span> <span class="asBracket">(</span>ab.dot<span class="asBracket">(</span>ab<span class="asBracket">))</span>;
+            <span class="asReserved">return</span> MathUtil.clamp<span class="asBracket">(</span>t, 0, 1<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+    
+    
+        <span class="asDoc">/**
+         * returns a contact location on this SCP expressed as a parametric value in [0,1]
+         */</span>
+        <span class="asReserved">private</span> <span class="asFunction">function</span> getContactPointParam<span class="asBracket">(</span>p<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            
+            <span class="asVar">var</span> t<span class="asOperator">:</span>Number;
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>p <span class="asReserved">is</span> CircleParticle<span class="asBracket">)</span>  <span class="asBracket">{</span>
+                t <span class="asOperator">=</span> closestParamPoint<span class="asBracket">(</span>p.curr<span class="asBracket">)</span>;
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>p <span class="asReserved">is</span> RectangleParticle<span class="asBracket">)</span> <span class="asBracket">{</span>
+                    
+                <span class="asComment">// go through the sides of the colliding rectangle as line segments
+</span>                <span class="asVar">var</span> shortestIndex<span class="asOperator">:</span>Number;
+                <span class="asVar">var</span> paramList<span class="asOperator">:</span>Array <span class="asOperator">=</span> <span class="asReserved">new</span> Array<span class="asBracket">(</span>4<span class="asBracket">)</span>;
+                <span class="asVar">var</span> shortestDistance<span class="asOperator">:</span>Number <span class="asOperator">=</span> Number.POSITIVE_INFINITY;
+                
+                <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> 4; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    setCorners<span class="asBracket">(</span>p <span class="asReserved">as</span> RectangleParticle, i<span class="asBracket">)</span>;
+                    
+                    <span class="asComment">// check for closest points on SCP to side of rectangle
+</span>                    <span class="asVar">var</span> d<span class="asOperator">:</span>Number <span class="asOperator">=</span> closestPtSegmentSegment<span class="asBracket">()</span>;
+                    <span class="asReserved">if</span> <span class="asBracket">(</span>d <span class="asOperator">&lt;</span> shortestDistance<span class="asBracket">)</span> <span class="asBracket">{</span>
+                        shortestDistance <span class="asOperator">=</span> d;
+                        shortestIndex <span class="asOperator">=</span> i;
+                        paramList<span class="asBracket">[</span>i<span class="asBracket">]</span> <span class="asOperator">=</span> s;
+                    <span class="asBracket">}</span>
+                <span class="asBracket">}</span>
+                t <span class="asOperator">=</span> paramList<span class="asBracket">[</span>shortestIndex<span class="asBracket">]</span>;
+            <span class="asBracket">}</span>
+            <span class="asReserved">return</span> t;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * 
+         */</span>
+        <span class="asReserved">private</span> <span class="asFunction">function</span> setCorners<span class="asBracket">(</span>r<span class="asOperator">:</span>RectangleParticle, i<span class="asOperator">:</span>int<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+        
+            <span class="asVar">var</span> rx<span class="asOperator">:</span>Number <span class="asOperator">=</span> r.curr.x;
+            <span class="asVar">var</span> ry<span class="asOperator">:</span>Number <span class="asOperator">=</span> r.curr.y;
+            
+            <span class="asVar">var</span> axes<span class="asOperator">:</span>Array <span class="asOperator">=</span> r.axes;
+            <span class="asVar">var</span> extents<span class="asOperator">:</span>Array <span class="asOperator">=</span> r.extents;
+            
+            <span class="asVar">var</span> ae0_x<span class="asOperator">:</span>Number <span class="asOperator">=</span> axes<span class="asBracket">[</span>0<span class="asBracket">]</span>.x <span class="asOperator">*</span> extents<span class="asBracket">[</span>0<span class="asBracket">]</span>;
+            <span class="asVar">var</span> ae0_y<span class="asOperator">:</span>Number <span class="asOperator">=</span> axes<span class="asBracket">[</span>0<span class="asBracket">]</span>.y <span class="asOperator">*</span> extents<span class="asBracket">[</span>0<span class="asBracket">]</span>;
+            <span class="asVar">var</span> ae1_x<span class="asOperator">:</span>Number <span class="asOperator">=</span> axes<span class="asBracket">[</span>1<span class="asBracket">]</span>.x <span class="asOperator">*</span> extents<span class="asBracket">[</span>1<span class="asBracket">]</span>;
+            <span class="asVar">var</span> ae1_y<span class="asOperator">:</span>Number <span class="asOperator">=</span> axes<span class="asBracket">[</span>1<span class="asBracket">]</span>.y <span class="asOperator">*</span> extents<span class="asBracket">[</span>1<span class="asBracket">]</span>;
+            
+            <span class="asVar">var</span> emx<span class="asOperator">:</span>Number <span class="asOperator">=</span> ae0_x <span class="asOperator">-</span> ae1_x;
+            <span class="asVar">var</span> emy<span class="asOperator">:</span>Number <span class="asOperator">=</span> ae0_y <span class="asOperator">-</span> ae1_y;
+            <span class="asVar">var</span> epx<span class="asOperator">:</span>Number <span class="asOperator">=</span> ae0_x <span class="asOperator">+</span> ae1_x;
+            <span class="asVar">var</span> epy<span class="asOperator">:</span>Number <span class="asOperator">=</span> ae0_y <span class="asOperator">+</span> ae1_y;
+            
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>i <span class="asOperator">==</span> 0<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asComment">// 0 and 1
+</span>                rca.x <span class="asOperator">=</span> rx <span class="asOperator">-</span> epx;
+                rca.y <span class="asOperator">=</span> ry <span class="asOperator">-</span> epy;
+                rcb.x <span class="asOperator">=</span> rx <span class="asOperator">+</span> emx;
+                rcb.y <span class="asOperator">=</span> ry <span class="asOperator">+</span> emy;
+            
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>i <span class="asOperator">==</span> 1<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asComment">// 1 and 2
+</span>                rca.x <span class="asOperator">=</span> rx <span class="asOperator">+</span> emx;
+                rca.y <span class="asOperator">=</span> ry <span class="asOperator">+</span> emy;
+                rcb.x <span class="asOperator">=</span> rx <span class="asOperator">+</span> epx;
+                rcb.y <span class="asOperator">=</span> ry <span class="asOperator">+</span> epy;
+                
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>i <span class="asOperator">==</span> 2<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asComment">// 2 and 3
+</span>                rca.x <span class="asOperator">=</span> rx <span class="asOperator">+</span> epx;
+                rca.y <span class="asOperator">=</span> ry <span class="asOperator">+</span> epy;
+                rcb.x <span class="asOperator">=</span> rx <span class="asOperator">-</span> emx;
+                rcb.y <span class="asOperator">=</span> ry <span class="asOperator">-</span> emy;
+                
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>i <span class="asOperator">==</span> 3<span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asComment">// 3 and 0
+</span>                rca.x <span class="asOperator">=</span> rx <span class="asOperator">-</span> emx;
+                rca.y <span class="asOperator">=</span> ry <span class="asOperator">-</span> emy;
+                rcb.x <span class="asOperator">=</span> rx <span class="asOperator">-</span> epx;
+                rcb.y <span class="asOperator">=</span> ry <span class="asOperator">-</span> epy;
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * pp1-pq1 will be the SCP line segment on which we need parameterized s. 
+         */</span>
+        <span class="asReserved">private</span> <span class="asFunction">function</span> closestPtSegmentSegment<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            
+            <span class="asVar">var</span> pp1<span class="asOperator">:</span>Vector <span class="asOperator">=</span> p1.curr;
+            <span class="asVar">var</span> pq1<span class="asOperator">:</span>Vector <span class="asOperator">=</span> p2.curr;
+            <span class="asVar">var</span> pp2<span class="asOperator">:</span>Vector <span class="asOperator">=</span> rca;
+            <span class="asVar">var</span> pq2<span class="asOperator">:</span>Vector <span class="asOperator">=</span> rcb;
+            
+            <span class="asVar">var</span> d1<span class="asOperator">:</span>Vector <span class="asOperator">=</span> pq1.minus<span class="asBracket">(</span>pp1<span class="asBracket">)</span>;
+            <span class="asVar">var</span> d2<span class="asOperator">:</span>Vector <span class="asOperator">=</span> pq2.minus<span class="asBracket">(</span>pp2<span class="asBracket">)</span>;
+            <span class="asVar">var</span> r<span class="asOperator">:</span>Vector <span class="asOperator">=</span> pp1.minus<span class="asBracket">(</span>pp2<span class="asBracket">)</span>;
+        
+            <span class="asVar">var</span> t<span class="asOperator">:</span>Number;
+            <span class="asVar">var</span> a<span class="asOperator">:</span>Number <span class="asOperator">=</span> d1.dot<span class="asBracket">(</span>d1<span class="asBracket">)</span>;
+            <span class="asVar">var</span> e<span class="asOperator">:</span>Number <span class="asOperator">=</span> d2.dot<span class="asBracket">(</span>d2<span class="asBracket">)</span>;
+            <span class="asVar">var</span> f<span class="asOperator">:</span>Number <span class="asOperator">=</span> d2.dot<span class="asBracket">(</span>r<span class="asBracket">)</span>;
+            
+            <span class="asVar">var</span> c<span class="asOperator">:</span>Number <span class="asOperator">=</span> d1.dot<span class="asBracket">(</span>r<span class="asBracket">)</span>;
+            <span class="asVar">var</span> b<span class="asOperator">:</span>Number <span class="asOperator">=</span> d1.dot<span class="asBracket">(</span>d2<span class="asBracket">)</span>;
+            <span class="asVar">var</span> denom<span class="asOperator">:</span>Number <span class="asOperator">=</span> a <span class="asOperator">*</span> e <span class="asOperator">-</span> b <span class="asOperator">*</span> b;
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>denom <span class="asOperator">!=</span> 0.0<span class="asBracket">)</span> <span class="asBracket">{</span>
+                s <span class="asOperator">=</span> MathUtil.clamp<span class="asBracket">((</span>b <span class="asOperator">*</span> f <span class="asOperator">-</span> c <span class="asOperator">*</span> e<span class="asBracket">)</span> <span class="asOperator">/</span> denom, 0, 1<span class="asBracket">)</span>;
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asBracket">{</span>
+                s <span class="asOperator">=</span> 0.5 <span class="asComment">// give the midpoint for parallel lines
+</span>            <span class="asBracket">}</span>
+            t <span class="asOperator">=</span> <span class="asBracket">(</span>b <span class="asOperator">*</span> s <span class="asOperator">+</span> f<span class="asBracket">)</span> <span class="asOperator">/</span> e;
+             
+            <span class="asReserved">if</span> <span class="asBracket">(</span>t <span class="asOperator">&lt;</span> 0<span class="asBracket">)</span> <span class="asBracket">{</span>
+                t <span class="asOperator">=</span> 0;
+                 s <span class="asOperator">=</span> MathUtil.clamp<span class="asBracket">(</span><span class="asOperator">-</span>c <span class="asOperator">/</span> a, 0, 1<span class="asBracket">)</span>;
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asReserved">if</span> <span class="asBracket">(</span>t <span class="asOperator">&gt;</span> 0<span class="asBracket">)</span> <span class="asBracket">{</span>
+                 t <span class="asOperator">=</span> 1;
+                 s <span class="asOperator">=</span> MathUtil.clamp<span class="asBracket">((</span>b <span class="asOperator">-</span> c<span class="asBracket">)</span> <span class="asOperator">/</span> a, 0, 1<span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+             
+            <span class="asVar">var</span> c1<span class="asOperator">:</span>Vector <span class="asOperator">=</span> pp1.plus<span class="asBracket">(</span>d1.mult<span class="asBracket">(</span>s<span class="asBracket">))</span>;
+            <span class="asVar">var</span> c2<span class="asOperator">:</span>Vector <span class="asOperator">=</span> pp2.plus<span class="asBracket">(</span>d2.mult<span class="asBracket">(</span>t<span class="asBracket">))</span>;
+            <span class="asVar">var</span> c1mc2<span class="asOperator">:</span>Vector <span class="asOperator">=</span> c1.minus<span class="asBracket">(</span>c2<span class="asBracket">)</span>;
+            <span class="asReserved">return</span> c1mc2.dot<span class="asBracket">(</span>c1mc2<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

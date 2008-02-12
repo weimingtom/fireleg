@@ -1,0 +1,100 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>AbstractConstraint.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asComment">/*
+Copyright (c) 2006, 2007 Alec Cove
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/</span>
+
+<span class="asComment">/*
+TODO:
+*/</span>
+
+<span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+    
+    <span class="asReserved">import</span> flash.display.Sprite;
+    <span class="asReserved">import</span> flash.display.DisplayObject;
+    <span class="asReserved">import</span> flash.utils.getQualifiedClassName;
+    <span class="asReserved">import</span> flash.utils.<span class="asOperator">*</span>;
+    
+    <span class="asDoc">/**
+     * The abstract base class for all constraints. 
+     * 
+     * &lt;p&gt;
+     * You should not instantiate this class directly -- instead use one of the subclasses.
+     * &lt;/p&gt;
+     */</span>
+    <span class="asReserved">public</span> <span class="asClass">class</span> AbstractConstraint <span class="asReserved">extends</span> AbstractItem <span class="asReserved">implements</span> IExternalizable <span class="asBracket">{</span>
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> _stiffness<span class="asOperator">:</span>Number;
+        
+
+        <span class="asDoc">/** 
+         * @private
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> AbstractConstraint <span class="asBracket">(</span>stiffness<span class="asOperator">:</span>Number<span class="asBracket">)</span> <span class="asBracket">{</span>    
+            <span class="asReserved">if</span> <span class="asBracket">(</span>getQualifiedClassName<span class="asBracket">(</span><span class="asReserved">this</span><span class="asBracket">)</span> <span class="asOperator">==</span> <span class="asString">&quot;org.cove.ape::AbstractConstraint&quot;</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">throw</span> <span class="asReserved">new</span> ArgumentError<span class="asBracket">(</span><span class="asString">&quot;AbstractConstraint can&apos;t be instantiated directly&quot;</span><span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+            <span class="asReserved">this</span>.stiffness <span class="asOperator">=</span> stiffness;
+            setStyle<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+            
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> writeExternal<span class="asBracket">(</span>output<span class="asOperator">:</span>IDataOutput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span>.writeExternal<span class="asBracket">(</span>output<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>_stiffness<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+          
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> readExternal<span class="asBracket">(</span>input<span class="asOperator">:</span>IDataInput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>  
+            <span class="asReserved">super</span>.readExternal<span class="asBracket">(</span>input<span class="asBracket">)</span>;
+            _stiffness <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+        <span class="asBracket">}</span>
+                
+        <span class="asDoc">/**
+         * The stiffness of the constraint. Higher values result in result in 
+         * stiffer constraints. Values should be &gt; 0 and &lt;= 1. Depending on the situation, 
+         * setting constraints to very high values may result in instability.
+         */</span> 
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> stiffness<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _stiffness;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>            
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> stiffness<span class="asBracket">(</span>s<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _stiffness <span class="asOperator">=</span> s;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Corrects the position of the attached particles based on their position and
+         * mass. This method is called automatically during the APEngine.step() cycle.
+         */</span>                    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> resolve<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

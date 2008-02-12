@@ -1,0 +1,148 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>RimParticle.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asComment">/*
+Copyright (c) 2006, 2007 Alec Cove
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/</span>
+
+<span class="asComment">/*
+TODO:
+- use vector methods in update()
+*/</span>
+
+<span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+    
+    <span class="asReserved">import</span> flash.utils.<span class="asOperator">*</span>;
+    
+    <span class="asReserved">public</span> <span class="asClass">class</span> RimParticle <span class="asReserved">implements</span> IExternalizable <span class="asBracket">{</span>
+        
+        <span class="asReserved">internal</span> <span class="asVar">var</span> curr<span class="asOperator">:</span>Vector;
+        <span class="asReserved">internal</span> <span class="asVar">var</span> prev<span class="asOperator">:</span>Vector;
+    
+        <span class="asReserved">private</span> <span class="asVar">var</span> wr<span class="asOperator">:</span>Number;
+        <span class="asReserved">private</span> <span class="asVar">var</span> av<span class="asOperator">:</span>Number;
+        <span class="asReserved">private</span> <span class="asVar">var</span> sp<span class="asOperator">:</span>Number;
+        <span class="asReserved">private</span> <span class="asVar">var</span> maxTorque<span class="asOperator">:</span>Number;
+        
+        
+        <span class="asDoc">/**
+         * The RimParticle is really just a second component of the wheel model.
+         * The rim particle is simulated in a coordsystem relative to the wheel&apos;s 
+         * center, not in worldspace.
+         * 
+         * Origins of this code are from Raigan Burns, Metanet Software
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> RimParticle<span class="asBracket">(</span>r<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0, mt<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0<span class="asBracket">)</span> <span class="asBracket">{</span>
+    
+            curr <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>r, 0<span class="asBracket">)</span>;
+            prev <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>0, 0<span class="asBracket">)</span>;
+            
+            sp <span class="asOperator">=</span> 0; 
+            av <span class="asOperator">=</span> 0;
+            
+            maxTorque <span class="asOperator">=</span> mt;     
+            wr <span class="asOperator">=</span> r;        
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> writeExternal<span class="asBracket">(</span>output<span class="asOperator">:</span>IDataOutput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            output.writeObject<span class="asBracket">(</span>curr<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>prev<span class="asBracket">)</span>;
+            
+            output.writeObject<span class="asBracket">(</span>wr<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>av<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>sp<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>maxTorque<span class="asBracket">)</span>;            
+        <span class="asBracket">}</span>
+          
+        <span class="asReserved">public</span> <span class="asFunction">function</span> readExternal<span class="asBracket">(</span>input<span class="asOperator">:</span>IDataInput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>  
+            curr <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            prev <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+                
+            wr <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+            av <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+            sp <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+            maxTorque <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;            
+        <span class="asBracket">}</span>        
+        
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">get</span> speed<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> sp;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">set</span> speed<span class="asBracket">(</span>s<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            sp <span class="asOperator">=</span> s;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">get</span> angularVelocity<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> av;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> <span class="asReserved">set</span> angularVelocity<span class="asBracket">(</span>s<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            av <span class="asOperator">=</span> s;
+        <span class="asBracket">}</span>
+        
+        <span class="asDoc">/**
+         * Origins of this code are from Raigan Burns, Metanet Software
+         */</span>
+        <span class="asReserved">internal</span> <span class="asFunction">function</span> update<span class="asBracket">(</span>dt<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asComment">//clamp torques to valid range
+</span>            sp <span class="asOperator">=</span> Math.max<span class="asBracket">(</span><span class="asOperator">-</span>maxTorque, Math.min<span class="asBracket">(</span>maxTorque, sp <span class="asOperator">+</span> av<span class="asBracket">))</span>;
+    
+            <span class="asComment">//apply torque
+</span>            <span class="asComment">//this is the tangent vector at the rim particle
+</span>            <span class="asVar">var</span> dx<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asOperator">-</span>curr.y;
+            <span class="asVar">var</span> dy<span class="asOperator">:</span>Number <span class="asOperator">=</span>  curr.x;
+    
+            <span class="asComment">//normalize so we can scale by the rotational speed
+</span>            <span class="asVar">var</span> len<span class="asOperator">:</span>Number <span class="asOperator">=</span> Math.sqrt<span class="asBracket">(</span>dx <span class="asOperator">*</span> dx <span class="asOperator">+</span> dy <span class="asOperator">*</span> dy<span class="asBracket">)</span>;
+            dx <span class="asOperator">/=</span> len;
+            dy <span class="asOperator">/=</span> len;
+    
+            curr.x <span class="asOperator">+=</span> sp <span class="asOperator">*</span> dx;
+            curr.y <span class="asOperator">+=</span> sp <span class="asOperator">*</span> dy;        
+    
+            <span class="asVar">var</span> ox<span class="asOperator">:</span>Number <span class="asOperator">=</span> prev.x;
+            <span class="asVar">var</span> oy<span class="asOperator">:</span>Number <span class="asOperator">=</span> prev.y;
+            <span class="asVar">var</span> px<span class="asOperator">:</span>Number <span class="asOperator">=</span> prev.x <span class="asOperator">=</span> curr.x;        
+            <span class="asVar">var</span> py<span class="asOperator">:</span>Number <span class="asOperator">=</span> prev.y <span class="asOperator">=</span> curr.y;        
+            
+            curr.x <span class="asOperator">+=</span> APEngine.damping <span class="asOperator">*</span> <span class="asBracket">(</span>px <span class="asOperator">-</span> ox<span class="asBracket">)</span>;
+            curr.y <span class="asOperator">+=</span> APEngine.damping <span class="asOperator">*</span> <span class="asBracket">(</span>py <span class="asOperator">-</span> oy<span class="asBracket">)</span>;    
+    
+            <span class="asComment">// hold the rim particle in place
+</span>            <span class="asVar">var</span> clen<span class="asOperator">:</span>Number <span class="asOperator">=</span> Math.sqrt<span class="asBracket">(</span>curr.x <span class="asOperator">*</span> curr.x <span class="asOperator">+</span> curr.y <span class="asOperator">*</span> curr.y<span class="asBracket">)</span>;
+            <span class="asVar">var</span> diff<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asBracket">(</span>clen <span class="asOperator">-</span> wr<span class="asBracket">)</span> <span class="asOperator">/</span> clen;
+    
+            curr.x <span class="asOperator">-=</span> curr.x <span class="asOperator">*</span> diff;
+            curr.y <span class="asOperator">-=</span> curr.y <span class="asOperator">*</span> diff;
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span>
+
+
+
+</pre></body>
+</html>

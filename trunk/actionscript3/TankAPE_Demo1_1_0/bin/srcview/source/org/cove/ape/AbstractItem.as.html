@@ -1,0 +1,257 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>AbstractItem.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asComment">/*
+Copyright (c) 2006, 2007 Alec Cove
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/</span>
+
+<span class="asComment">/*
+TODO:
+*/</span>
+
+<span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+    
+    <span class="asReserved">import</span> flash.display.Sprite;
+    <span class="asReserved">import</span> flash.display.DisplayObject;
+    <span class="asReserved">import</span> flash.events.EventDispatcher;
+    <span class="asReserved">import</span> flash.utils.<span class="asOperator">*</span>;
+    
+    <span class="asDoc">/** 
+     * The base class for all constraints and particles
+     */</span>
+    <span class="asReserved">public</span> <span class="asClass">class</span> AbstractItem <span class="asReserved">extends</span> EventDispatcher <span class="asReserved">implements</span> IExternalizable 
+    <span class="asBracket">{</span>
+        
+        <span class="asReserved">internal</span> <span class="asVar">var</span> _sprite<span class="asOperator">:</span>Sprite;
+        
+        <span class="asReserved">public</span> <span class="asVar">var</span> _solid<span class="asOperator">:</span>Boolean;
+        <span class="asReserved">public</span> <span class="asVar">var</span> _visible<span class="asOperator">:</span>Boolean;
+        <span class="asReserved">public</span> <span class="asVar">var</span> _alwaysRepaint<span class="asOperator">:</span>Boolean;
+        
+    
+        <span class="asDoc">/** @private */</span>
+        <span class="asReserved">public</span> <span class="asVar">var</span> lineThickness<span class="asOperator">:</span>Number;
+        <span class="asDoc">/** @private */</span>
+        <span class="asReserved">public</span> <span class="asVar">var</span> lineColor<span class="asOperator">:</span>uint;
+        <span class="asDoc">/** @private */</span>
+        <span class="asReserved">public</span> <span class="asVar">var</span> lineAlpha<span class="asOperator">:</span>Number;
+        <span class="asDoc">/** @private */</span>
+        <span class="asReserved">public</span> <span class="asVar">var</span> fillColor<span class="asOperator">:</span>uint;
+        <span class="asDoc">/** @private */</span>
+        <span class="asReserved">public</span> <span class="asVar">var</span> fillAlpha<span class="asOperator">:</span>Number;
+        <span class="asDoc">/** @private */</span>
+        <span class="asReserved">public</span> <span class="asVar">var</span> displayObject<span class="asOperator">:</span>DisplayObject;
+        <span class="asDoc">/** @private */</span>
+        <span class="asReserved">public</span> <span class="asVar">var</span> displayObjectOffset<span class="asOperator">:</span>Vector;
+        <span class="asDoc">/** @private */</span>
+        <span class="asReserved">public</span> <span class="asVar">var</span> displayObjectRotation<span class="asOperator">:</span>Number;
+        
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> AbstractItem<span class="asBracket">()</span> <span class="asBracket">{</span>
+            _solid <span class="asOperator">=</span> <span class="asReserved">true</span>;
+            _visible <span class="asOperator">=</span> <span class="asReserved">true</span>;    
+            _alwaysRepaint <span class="asOperator">=</span> <span class="asReserved">false</span>;            
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> writeExternal<span class="asBracket">(</span>output<span class="asOperator">:</span>IDataOutput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            output.writeBoolean<span class="asBracket">(</span>_solid<span class="asBracket">)</span>;
+            output.writeBoolean<span class="asBracket">(</span>_visible<span class="asBracket">)</span>;
+            output.writeBoolean<span class="asBracket">(</span>_alwaysRepaint<span class="asBracket">)</span>;
+
+            output.writeObject<span class="asBracket">(</span>lineThickness<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>lineColor <span class="asReserved">as</span> Number<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>lineAlpha<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>fillColor <span class="asReserved">as</span> Number<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>fillAlpha<span class="asBracket">)</span>;
+            <span class="asComment">//output.writeObject(displayObject:DisplayObject);
+</span>            output.writeObject<span class="asBracket">(</span>displayObjectOffset<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>displayObjectRotation<span class="asBracket">)</span>;            
+        <span class="asBracket">}</span>
+          
+        <span class="asReserved">public</span> <span class="asFunction">function</span> readExternal<span class="asBracket">(</span>input<span class="asOperator">:</span>IDataInput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>  
+            _solid <span class="asOperator">=</span> input.readBoolean<span class="asBracket">()</span>;
+            _visible <span class="asOperator">=</span> input.readBoolean<span class="asBracket">()</span>;
+            _alwaysRepaint <span class="asOperator">=</span> input.readBoolean<span class="asBracket">()</span>;
+
+            lineThickness <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+            lineColor <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+            lineAlpha <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+            fillColor <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+            fillAlpha <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+            <span class="asComment">//displayObject = input.readObject() as DisplayObject;
+</span>            displayObjectOffset <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            displayObjectRotation <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;            
+        <span class="asBracket">}</span>
+                
+        <span class="asDoc">/**
+         * This method is automatically called when an item&apos;s parent group is added to the engine,
+         * an item&apos;s Composite is added to a Group, or the item is added to a Composite or Group.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> init<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{}</span>
+        
+                
+        <span class="asDoc">/**
+         * The default painting method for this item. This method is called automatically
+         * by the &lt;code&gt;APEngine.paint()&lt;/code&gt; method. 
+         */</span>            
+        <span class="asReserved">public</span> <span class="asFunction">function</span> paint<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{}</span>    
+        
+        
+        <span class="asDoc">/**
+         * This method is called automatically when an item&apos;s parent group is removed
+         * from the APEngine.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> cleanup<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            sprite.graphics.clear<span class="asBracket">()</span>;
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> sprite.numChildren; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                sprite.removeChildAt<span class="asBracket">(</span>i<span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * For performance, fixed Particles and SpringConstraints don&apos;t have their &lt;code&gt;paint()&lt;/code&gt;
+         * method called in order to avoid unnecessary redrawing. A SpringConstraint is considered
+         * fixed if its two connecting Particles are fixed. Setting this property to &lt;code&gt;true&lt;/code&gt;
+         * forces &lt;code&gt;paint()&lt;/code&gt; to be called if this Particle or SpringConstraint &lt;code&gt;fixed&lt;/code&gt;
+         * property is true. If you are rotating a fixed Particle or SpringConstraint then you would set 
+         * it&apos;s repaintFixed property to true. This property has no effect if a Particle or 
+         * SpringConstraint is not fixed.
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">final</span> <span class="asFunction">function</span> <span class="asReserved">get</span> alwaysRepaint<span class="asBracket">()</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _alwaysRepaint;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">final</span> <span class="asFunction">function</span> <span class="asReserved">set</span> alwaysRepaint<span class="asBracket">(</span>b<span class="asOperator">:</span>Boolean<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _alwaysRepaint <span class="asOperator">=</span> b;
+        <span class="asBracket">}</span>    
+        
+                
+        <span class="asDoc">/**
+         * The visibility of the item. 
+         */</span>    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> visible<span class="asBracket">()</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _visible;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>            
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> visible<span class="asBracket">(</span>v<span class="asOperator">:</span>Boolean<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _visible <span class="asOperator">=</span> v;
+            sprite.visible <span class="asOperator">=</span> v;
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * Sets the solidity of the item. If an item is not solid, then other items colliding
+         * with it will not respond to the collision. This property differs from 
+         * &lt;code&gt;collidable&lt;/code&gt; in that you can still test for collision events if
+         * an item&apos;s &lt;code&gt;collidable&lt;/code&gt; property is true and its &lt;code&gt;solid&lt;/code&gt;
+         * property is false. 
+         * 
+         * &lt;p&gt;
+         * The &lt;code&gt;collidable&lt;/code&gt; property takes precidence over the &lt;code&gt;solid&lt;/code&gt;
+         * property if &lt;code&gt;collidable&lt;/code&gt; is set to false. That is, if &lt;code&gt;collidable&lt;/code&gt;
+         * is false, it won&apos;t matter if &lt;code&gt;solid&lt;/code&gt; is set to true or false.
+         * &lt;/p&gt;
+         * 
+         * &lt;p&gt;
+         * If you don&apos;t need to check for collision events, using &lt;code&gt;collidable&lt;/code&gt;
+         * is much more efficient. Always use &lt;code&gt;collidable&lt;/code&gt; unless you need to
+         * handle collision events.
+         * &lt;/p&gt;
+         */</span>    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> solid<span class="asBracket">()</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            <span class="asReserved">return</span> _solid;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>            
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> solid<span class="asBracket">(</span>s<span class="asOperator">:</span>Boolean<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _solid <span class="asOperator">=</span> s;
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * Sets the line and fill of this Item.
+         */</span>         
+        <span class="asReserved">public</span> <span class="asFunction">function</span> setStyle<span class="asBracket">(</span>
+                lineThickness<span class="asOperator">:</span>Number<span class="asOperator">=</span>0, lineColor<span class="asOperator">:</span>uint<span class="asOperator">=</span>0x000000, lineAlpha<span class="asOperator">:</span>Number<span class="asOperator">=</span>1,
+                fillColor<span class="asOperator">:</span>uint<span class="asOperator">=</span>0xffffff, fillAlpha<span class="asOperator">:</span>Number<span class="asOperator">=</span>1<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            setLine<span class="asBracket">(</span>lineThickness, lineColor, lineAlpha<span class="asBracket">)</span>;        
+            setFill<span class="asBracket">(</span>fillColor, fillAlpha<span class="asBracket">)</span>;        
+        <span class="asBracket">}</span>        
+        
+        
+        <span class="asDoc">/**
+         * Sets the style of the line for this Item. 
+         */</span> 
+        <span class="asReserved">public</span> <span class="asFunction">function</span> setLine<span class="asBracket">(</span>thickness<span class="asOperator">:</span>Number<span class="asOperator">=</span>0, color<span class="asOperator">:</span>uint<span class="asOperator">=</span>0x000000, alpha<span class="asOperator">:</span>Number<span class="asOperator">=</span>1<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            lineThickness <span class="asOperator">=</span> thickness;
+            lineColor <span class="asOperator">=</span> color;
+            lineAlpha <span class="asOperator">=</span> alpha;
+        <span class="asBracket">}</span>
+            
+            
+        <span class="asDoc">/**
+         * Sets the style of the fill for this Item. 
+         */</span> 
+        <span class="asReserved">public</span> <span class="asFunction">function</span> setFill<span class="asBracket">(</span>color<span class="asOperator">:</span>uint<span class="asOperator">=</span>0xffffff, alpha<span class="asOperator">:</span>Number<span class="asOperator">=</span>1<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            fillColor <span class="asOperator">=</span> color;
+            fillAlpha <span class="asOperator">=</span> alpha;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * Provides a Sprite to use as a container for drawing or adding children. When the
+         * sprite is requested for the first time it is automatically added to the global
+         * container in the APEngine class.
+         */</span>    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> sprite<span class="asBracket">()</span><span class="asOperator">:</span>Sprite <span class="asBracket">{</span>
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>_sprite <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asReserved">return</span> _sprite;
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>APEngine.container <span class="asOperator">==</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asReserved">throw</span> <span class="asReserved">new</span> Error<span class="asBracket">(</span><span class="asString">&quot;The container property of the APEngine class has not been set&quot;</span><span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+            
+            _sprite <span class="asOperator">=</span> <span class="asReserved">new</span> Sprite<span class="asBracket">()</span>;
+            APEngine.container.addChild<span class="asBracket">(</span>_sprite<span class="asBracket">)</span>;
+            <span class="asReserved">return</span> _sprite;
+        <span class="asBracket">}</span>    
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span>
+</pre></body>
+</html>

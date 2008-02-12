@@ -1,0 +1,81 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>JAGSGroup.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span> org.cove.ape.JAGS
+<span class="asBracket">{</span>
+    <span class="asReserved">import</span> org.cove.ape.<span class="asOperator">*</span>;
+    <span class="asReserved">import</span> flash.utils.<span class="asOperator">*</span>;
+    
+    <span class="asReserved">public</span> <span class="asClass">class</span> JAGSGroup <span class="asReserved">extends</span> org.cove.ape.Group <span class="asReserved">implements</span> IExternalizable 
+    <span class="asBracket">{</span>
+        <span class="asReserved">public</span> <span class="asVar">var</span> name<span class="asOperator">:</span>String <span class="asOperator">=</span> <span class="asString">&quot;&quot;</span>;
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> JAGSGroup<span class="asBracket">(</span>collideInternal<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span><span class="asBracket">)</span>
+        <span class="asBracket">{</span>
+            <span class="asReserved">super</span><span class="asBracket">(</span>collideInternal<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> writeExternal<span class="asBracket">(</span>output<span class="asOperator">:</span>IDataOutput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span>.writeExternal<span class="asBracket">(</span>output<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>name<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+          
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> readExternal<span class="asBracket">(</span>input<span class="asOperator">:</span>IDataInput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>  
+            <span class="asReserved">super</span>.readExternal<span class="asBracket">(</span>input<span class="asBracket">)</span>;
+            name <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> String;
+        <span class="asBracket">}</span>
+
+        <span class="asComment">// Magically move your entire group of particles to this
+</span>        <span class="asComment">// exact location.        
+</span>        <span class="asReserved">public</span> <span class="asFunction">function</span> placeAbsolute<span class="asBracket">(</span>x<span class="asOperator">:</span>Number, y<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asVar">var</span> v<span class="asOperator">:</span>Vector <span class="asOperator">=</span> getRelativeBearing<span class="asBracket">(</span>x,y<span class="asBracket">)</span>;
+            placeRelative<span class="asBracket">(</span>v.x, v.y<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asComment">// You need to find out where your point is relative
+</span>        <span class="asComment">// to the object before calling placeRelative.
+</span>        <span class="asComment">// This method does that by comparing the first particle
+</span>        <span class="asComment">// in the first composite.
+</span>        <span class="asReserved">public</span> <span class="asFunction">function</span> getRelativeBearing<span class="asBracket">(</span>x<span class="asOperator">:</span>Number, y<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span>Vector <span class="asBracket">{</span>
+            <span class="asVar">var</span> c<span class="asOperator">:</span>JAGSComposite <span class="asOperator">=</span> <span class="asReserved">this</span>.composites<span class="asBracket">[</span>0<span class="asBracket">]</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>c <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                <span class="asVar">var</span> firstPartcile<span class="asOperator">:</span>AbstractParticle <span class="asOperator">=</span> c.particles<span class="asBracket">[</span>0<span class="asBracket">]</span> <span class="asReserved">as</span> AbstractParticle;
+                <span class="asReserved">if</span> <span class="asBracket">(</span>firstPartcile <span class="asOperator">==</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    <span class="asReserved">return</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>x, y<span class="asBracket">)</span>;
+                <span class="asBracket">}</span>
+                <span class="asReserved">else</span> <span class="asBracket">{</span>
+                    <span class="asVar">var</span> v<span class="asOperator">:</span>Vector <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>firstPartcile.px <span class="asOperator">-</span> x, firstPartcile.py <span class="asOperator">-</span> y<span class="asBracket">)</span>;
+                    <span class="asReserved">return</span> v;
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>
+            <span class="asReserved">else</span> <span class="asReserved">return</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>x, y<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asComment">// moves all composite&apos;s particles witin the group.
+</span>        <span class="asComment">// the x and y are relative to where each x,y is
+</span>        <span class="asReserved">public</span> <span class="asFunction">function</span> placeRelative<span class="asBracket">(</span>x<span class="asOperator">:</span>Number, y<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asVar">var</span> c<span class="asOperator">:</span>JAGSComposite;
+            <span class="asVar">var</span> p<span class="asOperator">:</span>AbstractParticle;
+            
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> <span class="asReserved">this</span>.composites.length; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                c <span class="asOperator">=</span> <span class="asReserved">this</span>.composites<span class="asBracket">[</span>i<span class="asBracket">]</span> <span class="asReserved">as</span> JAGSComposite;
+                <span class="asComment">//trace(&quot;Moving Composite &quot;+ c.name +&quot; (&quot;+ i +&quot;) with #particles ==&quot;+ c.particles.length);
+</span>                                
+                <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> j<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; j <span class="asOperator">&lt;</span> c.particles.length; j<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    p <span class="asOperator">=</span> c.particles<span class="asBracket">[</span>j<span class="asBracket">]</span> <span class="asReserved">as</span> AbstractParticle;
+                    p.px <span class="asOperator">=</span> p.px <span class="asOperator">-</span> x;
+                    p.py <span class="asOperator">=</span> p.py <span class="asOperator">-</span> y;
+                <span class="asBracket">}</span>
+                
+            <span class="asBracket">}</span>
+        <span class="asBracket">}</span>
+        
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

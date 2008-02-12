@@ -1,0 +1,282 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>WheelParticle.as</title>
+<link rel="stylesheet" type="text/css" href="../../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asComment">/*
+Copyright (c) 2006, 2007 Alec Cove
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+software and associated documentation files (the &quot;Software&quot;), to deal in the Software 
+without restriction, including without limitation the rights to use, copy, modify, 
+merge, publish, distribute, sublicense, and/or sell copies of the Software, and to 
+permit persons to whom the Software is furnished to do so, subject to the following 
+conditions:
+
+The above copyright notice and this permission notice shall be included in all copies 
+or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
+PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE 
+OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/</span>
+
+<span class="asComment">/*
+TODO:
+- review how the WheelParticle needs to have the o value passed during collision
+- clear up the difference between speed and angularVelocity
+- can the wheel rotate steadily using speed? angularVelocity causes (unwanted?) acceleration
+*/</span>
+
+<span class="asPackage">package</span> org.cove.ape <span class="asBracket">{</span>
+    
+    <span class="asReserved">import</span> flash.utils.<span class="asOperator">*</span>;
+    
+    <span class="asDoc">/**
+     * A particle that simulates the behavior of a wheel 
+     */</span> 
+    <span class="asReserved">public</span> <span class="asClass">class</span> WheelParticle <span class="asReserved">extends</span> CircleParticle <span class="asReserved">implements</span> IExternalizable <span class="asBracket">{</span>
+    
+        <span class="asReserved">private</span> <span class="asVar">var</span> rp<span class="asOperator">:</span>RimParticle;
+        <span class="asReserved">private</span> <span class="asVar">var</span> tan<span class="asOperator">:</span>Vector;    
+        <span class="asReserved">private</span> <span class="asVar">var</span> normSlip<span class="asOperator">:</span>Vector;
+        <span class="asReserved">private</span> <span class="asVar">var</span> orientation<span class="asOperator">:</span>Vector;
+        
+        <span class="asReserved">private</span> <span class="asVar">var</span> _traction<span class="asOperator">:</span>Number;
+        
+    
+        <span class="asDoc">/**
+         * @param x The initial x position.
+         * @param y The initial y position.
+         * @param radius The radius of this particle.
+         * @param fixed Determines if the particle is fixed or not. Fixed particles
+         * are not affected by forces or collisions and are good to use as surfaces.
+         * Non-fixed particles move freely in response to collision and forces.
+         * @param mass The mass of the particle
+         * @param elasticity The elasticity of the particle. Higher values mean more elasticity.
+         * @param friction The surface friction of the particle. 
+         * @param traction The surface traction of the particle.
+         * &lt;p&gt;
+         * Note that WheelParticles can be fixed but rotate freely.
+         * &lt;/p&gt;
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> WheelParticle<span class="asBracket">(</span>
+                x<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0, 
+                y<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0, 
+                radius<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0, 
+                fixed<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span>, 
+                mass<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1, 
+                elasticity<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0.3,
+                friction<span class="asOperator">:</span>Number <span class="asOperator">=</span> 0,
+                traction<span class="asOperator">:</span>Number <span class="asOperator">=</span> 1<span class="asBracket">)</span> <span class="asBracket">{</span>
+    
+            <span class="asReserved">super</span><span class="asBracket">(</span>x,y,radius,fixed, mass, elasticity, friction<span class="asBracket">)</span>;
+            tan <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>0,0<span class="asBracket">)</span>;
+            normSlip <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">(</span>0,0<span class="asBracket">)</span>;
+            rp <span class="asOperator">=</span> <span class="asReserved">new</span> RimParticle<span class="asBracket">(</span>radius, 2<span class="asBracket">)</span>;     
+            
+            <span class="asReserved">this</span>.traction <span class="asOperator">=</span> traction;
+            orientation <span class="asOperator">=</span> <span class="asReserved">new</span> Vector<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>    
+    
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> writeExternal<span class="asBracket">(</span>output<span class="asOperator">:</span>IDataOutput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span>.writeExternal<span class="asBracket">(</span>output<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>rp<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>tan<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>normSlip<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>orientation<span class="asBracket">)</span>;
+            output.writeObject<span class="asBracket">(</span>_traction<span class="asBracket">)</span>;    
+        <span class="asBracket">}</span>
+          
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> readExternal<span class="asBracket">(</span>input<span class="asOperator">:</span>IDataInput<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>  
+            <span class="asReserved">super</span>.readExternal<span class="asBracket">(</span>input<span class="asBracket">)</span>;
+            rp <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> RimParticle;
+            tan <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;    
+            normSlip <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            orientation <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Vector;
+            _traction <span class="asOperator">=</span> input.readObject<span class="asBracket">()</span> <span class="asReserved">as</span> Number;
+        <span class="asBracket">}</span>
+        
+        <span class="asDoc">/**
+         * The speed of the WheelParticle. You can alter this value to make the 
+         * WheelParticle spin.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> speed<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> rp.speed;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> speed<span class="asBracket">(</span>s<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            rp.speed <span class="asOperator">=</span> s;
+        <span class="asBracket">}</span>
+    
+        
+        <span class="asDoc">/**
+         * The angular velocity of the WheelParticle. You can alter this value to make the 
+         * WheelParticle spin.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> angularVelocity<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> rp.angularVelocity;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * @private
+         */</span>        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> angularVelocity<span class="asBracket">(</span>a<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            rp.angularVelocity <span class="asOperator">=</span> a;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * The amount of traction during a collision. This property controls how much traction is 
+         * applied when the WheelParticle is in contact with another particle. If the value is set
+         * to 0, there will be no traction and the WheelParticle will behave as if the 
+         * surface was totally slippery, like ice. Values should be between 0 and 1. 
+         * 
+         * &lt;p&gt;
+         * Note that the friction property behaves differently than traction. If the surface 
+         * friction is set high during a collision, the WheelParticle will move slowly as if
+         * the surface was covered in glue.
+         * &lt;/p&gt;
+         */</span>        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> traction<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> 1 <span class="asOperator">-</span> _traction;
+        <span class="asBracket">}</span>
+    
+    
+        <span class="asDoc">/**
+         * @private
+         */</span>                
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">set</span> traction<span class="asBracket">(</span>t<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            _traction <span class="asOperator">=</span> 1 <span class="asOperator">-</span> t;
+        <span class="asBracket">}</span>
+        
+        
+        <span class="asDoc">/**
+         * The default paint method for the particle. Note that you should only use
+         * the default painting methods for quick prototyping. For anything beyond that
+         * you should always write your own classes that either extend one of the
+         * APE particle and constraint classes, or is a composite of them. Then within that 
+         * class you can define your own custom painting method.
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> paint<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            sprite.x <span class="asOperator">=</span> curr.x;
+            sprite.y <span class="asOperator">=</span> curr.y;
+            sprite.rotation <span class="asOperator">=</span> angle;    
+        <span class="asBracket">}</span>
+    
+    
+        <span class="asDoc">/**
+         * Sets up the visual representation of this particle. This method is automatically called when 
+         * an particle is added to the engine.
+         */</span>
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> init<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            cleanup<span class="asBracket">()</span>;
+            <span class="asReserved">if</span> <span class="asBracket">(</span>displayObject <span class="asOperator">!=</span> <span class="asReserved">null</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                initDisplay<span class="asBracket">()</span>;
+            <span class="asBracket">}</span> <span class="asReserved">else</span> <span class="asBracket">{</span>
+                
+                sprite.graphics.clear<span class="asBracket">()</span>;
+                sprite.graphics.lineStyle<span class="asBracket">(</span>lineThickness, lineColor, lineAlpha<span class="asBracket">)</span>;
+                
+                <span class="asComment">// wheel circle
+</span>                sprite.graphics.beginFill<span class="asBracket">(</span>fillColor, fillAlpha<span class="asBracket">)</span>;
+                sprite.graphics.drawCircle<span class="asBracket">(</span>0, 0, radius<span class="asBracket">)</span>;
+                sprite.graphics.endFill<span class="asBracket">()</span>;
+                
+                <span class="asComment">// spokes
+</span>                sprite.graphics.moveTo<span class="asBracket">(</span><span class="asOperator">-</span>radius, 0<span class="asBracket">)</span>;
+                sprite.graphics.lineTo<span class="asBracket">(</span> radius, 0<span class="asBracket">)</span>;
+                sprite.graphics.moveTo<span class="asBracket">(</span>0, <span class="asOperator">-</span>radius<span class="asBracket">)</span>;
+                sprite.graphics.lineTo<span class="asBracket">(</span>0, radius<span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+            paint<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+
+
+        <span class="asDoc">/**
+         * The rotation of the wheel in radians.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> radian<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            orientation.setTo<span class="asBracket">(</span>rp.curr.x, rp.curr.y<span class="asBracket">)</span>;
+            <span class="asReserved">return</span> Math.atan2<span class="asBracket">(</span>orientation.y, orientation.x<span class="asBracket">)</span> <span class="asOperator">+</span> Math.PI;
+        <span class="asBracket">}</span> 
+
+
+        <span class="asDoc">/**
+         * The rotation of the wheel in degrees.
+         */</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> <span class="asReserved">get</span> angle<span class="asBracket">()</span><span class="asOperator">:</span>Number <span class="asBracket">{</span>
+            <span class="asReserved">return</span> radian <span class="asOperator">*</span> MathUtil.ONE_EIGHTY_OVER_PI;
+        <span class="asBracket">}</span> 
+
+        
+        <span class="asDoc">/**
+         *
+         */</span>            
+        <span class="asReserved">public</span> <span class="asReserved">override</span> <span class="asFunction">function</span> update<span class="asBracket">(</span>dt<span class="asOperator">:</span>Number<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">super</span>.update<span class="asBracket">(</span>dt<span class="asBracket">)</span>;
+            rp.update<span class="asBracket">(</span>dt<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+    
+    
+        <span class="asDoc">/**
+         * @private
+         */</span>        
+        <span class="asReserved">internal</span> <span class="asReserved">override</span> <span class="asFunction">function</span> resolveCollision<span class="asBracket">(</span>mtd<span class="asOperator">:</span>Vector, vel<span class="asOperator">:</span>Vector, n<span class="asOperator">:</span>Vector,
+                d<span class="asOperator">:</span>Number, o<span class="asOperator">:</span>int, p<span class="asOperator">:</span>AbstractParticle<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            
+            <span class="asComment">// review the o (order) need here - its a hack fix
+</span>            <span class="asReserved">super</span>.resolveCollision<span class="asBracket">(</span>mtd, vel, n, d, o, p<span class="asBracket">)</span>;
+            resolve<span class="asBracket">(</span>n.mult<span class="asBracket">(</span>MathUtil.sign<span class="asBracket">(</span>d <span class="asOperator">*</span> o<span class="asBracket">)))</span>;
+        <span class="asBracket">}</span>
+        
+    
+        <span class="asDoc">/**
+         * simulates torque/wheel-ground interaction - n is the surface normal
+         * Origins of this code thanks to Raigan Burns, Metanet software
+         */</span>
+        <span class="asReserved">private</span> <span class="asFunction">function</span> resolve<span class="asBracket">(</span>n<span class="asOperator">:</span>Vector<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+    
+            <span class="asComment">// this is the tangent vector at the rim particle
+</span>            tan.setTo<span class="asBracket">(</span><span class="asOperator">-</span>rp.curr.y, rp.curr.x<span class="asBracket">)</span>;
+    
+            <span class="asComment">// normalize so we can scale by the rotational speed
+</span>            tan <span class="asOperator">=</span> tan.normalize<span class="asBracket">()</span>;
+    
+            <span class="asComment">// velocity of the wheel&apos;s surface 
+</span>            <span class="asVar">var</span> wheelSurfaceVelocity<span class="asOperator">:</span>Vector <span class="asOperator">=</span> tan.mult<span class="asBracket">(</span>rp.speed<span class="asBracket">)</span>;
+            
+            <span class="asComment">// the velocity of the wheel&apos;s surface relative to the ground
+</span>            <span class="asVar">var</span> combinedVelocity<span class="asOperator">:</span>Vector <span class="asOperator">=</span> velocity.plusEquals<span class="asBracket">(</span>wheelSurfaceVelocity<span class="asBracket">)</span>;
+        
+            <span class="asComment">// the wheel&apos;s comb velocity projected onto the contact normal
+</span>            <span class="asVar">var</span> cp<span class="asOperator">:</span>Number <span class="asOperator">=</span> combinedVelocity.cross<span class="asBracket">(</span>n<span class="asBracket">)</span>;
+    
+            <span class="asComment">// set the wheel&apos;s spinspeed to track the ground
+</span>            tan.multEquals<span class="asBracket">(</span>cp<span class="asBracket">)</span>;
+            rp.prev.copy<span class="asBracket">(</span>rp.curr.minus<span class="asBracket">(</span>tan<span class="asBracket">))</span>;
+    
+            <span class="asComment">// some of the wheel&apos;s torque is removed and converted into linear displacement
+</span>            <span class="asVar">var</span> slipSpeed<span class="asOperator">:</span>Number <span class="asOperator">=</span> <span class="asBracket">(</span>1 <span class="asOperator">-</span> _traction<span class="asBracket">)</span> <span class="asOperator">*</span> rp.speed;
+            normSlip.setTo<span class="asBracket">(</span>slipSpeed <span class="asOperator">*</span> n.y, slipSpeed <span class="asOperator">*</span> n.x<span class="asBracket">)</span>;
+            curr.plusEquals<span class="asBracket">(</span>normSlip<span class="asBracket">)</span>;
+            rp.speed <span class="asOperator">*=</span> _traction;    
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span>
+
+
+</pre></body>
+</html>

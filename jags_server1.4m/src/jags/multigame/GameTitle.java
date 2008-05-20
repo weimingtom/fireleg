@@ -32,11 +32,17 @@ public class GameTitle {
     }
     
     public int registerConnection(Connection c) {
+       if (IGame != null) {
+        IGame.registerConnection(c);
+       }
        connections.add(c);
-
+       
        return connections.size();
     }
     public void unregisterConnection(Connection c) {
-       connections.remove(c);
+       if (IGame != null) {
+           IGame.unregisterConnection(c);
+       }
+        connections.remove(c);
     }
 }

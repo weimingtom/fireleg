@@ -24,6 +24,8 @@ public class Message {
     public String from= "";
     public String[] to;
     public String format = "";
+    
+    public Connection conn = null;
    
     // PROTOCOL:
     // tellAll means everyone including the sender
@@ -55,12 +57,17 @@ public class Message {
         tellOthers = false;
         tellSelect = false;
         tellServer = false;
+        conn = null;
     }
     
     // takes raw format of message string and transforms into an object
     // time>from>format>to>message
-    public void parseMessage(String message) {
+    //
+    // added the requirement to supply a connection, to make sure it's set each time.
+    // we use this connection object later in IGame extensively.
+    public void parseMessage(String message, Connection conn) {
         clearMessage();
+        this.conn = conn;
         
         // parse something like:
         // TimeStamp>From>To[!All | !Others | johnny3,billy56,sarah908]>Action        

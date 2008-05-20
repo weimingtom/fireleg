@@ -20,18 +20,14 @@ public class GameLibrarian {
     ArrayList authors = new ArrayList();
     
     public GameLibrarian() {
-        authors.add("public_ftp");
+        //authors.add("public_ftp");
         File f = new File("");
-        System.out.println("File Home :"+ f.getAbsolutePath() );
-        
-        // TODO: add private accounts for other authors.  
-        // like a property file of accounts lookup,
-        // or a list of all the directories in a certain folder.
-        // The properties way could keep meta data... maybe better.
-        // Or a full db of users.
+        System.out.println("Abs Server Home :"+ f.getAbsolutePath() );
         
         loadTitlesFromDisk();
     }
+    
+    public static String folderContainingGames = "games";
     
     public void loadTitlesFromDisk() {
         try {
@@ -39,32 +35,36 @@ public class GameLibrarian {
             String title = null;
             String version = null;
 
-            System.out.println("LoadTitlesFromDisk debug 101");
-            if (authors == null) return;
+            File root = new File(folderContainingGames);  
+            if (root == null) return;            
+            System.out.println("");
+            System.out.println("Abs Path of Games = " + root.getAbsolutePath());            
+
+            File[] authorFiles = root.listFiles();
+            if (authorFiles == null) return;
             
-            for (int n = 0; n < authors.size(); n++) {
-                author = (String) authors.get(n);
-                File root = new File(author);
-                System.out.println("");
-                System.out.println("Abs Path = " + root.getAbsolutePath());
+            for (int n = 0; n < authorFiles.length; n++) {
+                author = (String) authorFiles[n].getName();
+                //File root = new File(folderContainingGames + File.separator + author);
+
                 System.out.println("Author :"+ author);
 
-                if (root == null) return;
-                File[] titles = root.listFiles();
+                File[] titles = authorFiles[n].listFiles();
                 if (titles == null) return;
                 
                 for (int j = 0; j < titles.length; j++) {
                     title = titles[j].getName();
-                    System.out.println("Title :"+ title);
 
                     File[] versions = titles[j].listFiles();
                     if (versions == null) return;
                     for (int k = 0; k < versions.length; k++) {
                         version = versions[k].getName();
-                         System.out.println("Version :"+ version);
 
                          String uniqueName = author +"."+ title +"."+ version;
-                         lookupCreate(uniqueName);
+                         if (!uniqueName.contains(".svn") && !uniqueName.contains(".cvs")) {
+                             System.out.println("Title :"+ title +":"+ version);
+                             lookupCreate(uniqueName);
+                         }
                     }
                 }
             }

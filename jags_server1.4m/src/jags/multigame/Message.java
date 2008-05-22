@@ -97,6 +97,17 @@ public class Message {
         action.setupAction(headers[i]);
     }
     
+    public void replyOnlyToSender() {
+        replyOnlyTo(conn.connectionName);
+    }
+
+    public void replyOnlyTo(String recipient) {
+        this.to = null;
+        this.to = new String[1];
+        this.to[0] = recipient;
+    }
+
+    
     // transforms to[] back to simple String
     public String toThese() {
         StringBuilder toThese = new StringBuilder();

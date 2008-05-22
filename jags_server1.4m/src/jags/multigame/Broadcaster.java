@@ -124,10 +124,14 @@ public class Broadcaster implements IBroadCast {
                 connectionLookingForPlayers = conn;
                 if (conn.groupName.equals("")) {
                     conn.groupName = "group_"+ conn.connectionNumber +"g";
+                    conn.isHost = true;
+                    conn.groupSize ++;
+                
                     // Let client know
                     conn.sendClient("!name_group"+ Message.CLIENT_DELIMITER + conn.groupName);
                     conn.sendClient("!you_host"+ Message.CLIENT_DELIMITER +conn.connectionName);
-
+                    conn.sendClient("!group_size"+ Message.CLIENT_DELIMITER + conn.groupSize);            
+                    
                     Trace.out("NEW GAME: "+ conn.groupName);
                 }
             }
@@ -136,16 +140,29 @@ public class Broadcaster implements IBroadCast {
             // ---------------------
             else {
                 connectionLookingForPlayers.waitingForMore --;
-                connectionLookingForPlayers.sendClient("!add_player"+ Message.CLIENT_DELIMITER + conn.connectionName);
-
+                tellGroupMyselfIncluded("!add_player"+ Message.CLIENT_DELIMITER + conn.connectionName, conn);
+                
                 conn.waitingForMore = 0;
+                conn.isHost = false;
+                connectionLookingForPlayers.groupSize ++;
+                conn.groupSize = connectionLookingForPlayers.groupSize;
+                conn.groupName = connectionLookingForPlayers.groupName;
+                
+                // let client know
                 conn.sendClient("!joined_host"+ Message.CLIENT_DELIMITER + connectionLookingForPlayers.connectionName);
-                conn.sendClient("!name_group"+ Message.CLIENT_DELIMITER + connectionLookingForPlayers.groupName);            
-
-                // Get ready for next game host
-                if (connectionLookingForPlayers.waitingForMore == 0)
-                    connectionLookingForPlayers = null;
+                conn.sendClient("!name_group"+ Message.CLIENT_DELIMITER + conn.groupName);            
+                tellGroupMyselfIncluded("!group_size"+ Message.CLIENT_DELIMITER + conn.groupSize, conn);            
+                // TODO: send entire list of group out to all clients... (for those that enter later)
             }
+            
+            checkForAutoStart(conn);
         }
-    }  
+    }
+    
+    public void checkForAutoStart(Connection conn) {
+                if (connectionLookingForPlayers.waitingForMore <= 1) {
+                    gameStarted(conn);                    
+                    connectionLookingForPlayers = null;        
+                }
+    }
 }

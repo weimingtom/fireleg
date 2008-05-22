@@ -51,7 +51,7 @@ public class Connection extends Thread {
     Action action = new Action();
     
     // keeps track of things if you just want to modify one java game
-    // class, recompile this  and skip the fancy librarian stuff.
+    // class, recompile this to your specific class and skip the fancy librarian stuff.
     GameState state = null;
     
     // by setting the gameName (below), this little class pops into action.
@@ -64,7 +64,7 @@ public class Connection extends Thread {
     //    
     // This partitions your communications off to avoid collisions with
     // other people's games on this same server.
-    String gameName = null;
+    public String gameName = null;
     
     // ---------------------
     //   Communications
@@ -72,8 +72,8 @@ public class Connection extends Thread {
 
     // group is anonymous until set.  this means default is for everyone
     // within same gameName to hear all communications.
-    String groupName = "";
-    String connectionName = "";
+    public String groupName = "";
+    public String connectionName = "";
     
     // a unique number id, internal to the game server only
     int connectionNumber;
@@ -81,7 +81,9 @@ public class Connection extends Thread {
     // Signals how many more players we need
     // Protocol is !more>4 (meaning need 4 more besides this connection)
     // the > is whatever the Message.DELIMITER is.
-    int waitingForMore = 0;
+    public int waitingForMore = 0;
+    public int groupSize = 0;
+    public boolean isHost = false;
 
     public void setGameState(GameState gs) {
         state = gs;

@@ -44,7 +44,7 @@ public class jagsGame implements IGame {
         // availabe states in map
         for (Iterator<String> it = myStates.keySet().iterator(); it.hasNext();) {
             String s = it.next();
-            System.out.println(s +":"+ myStates.get(s));
+            System.out.println("STATE "+ s +":"+ myStates.get(s));
         }
         
         YourGameState state;
@@ -54,6 +54,8 @@ public class jagsGame implements IGame {
             if (message.action.verb.contains("login_me_in")) {
                 // do code for login - you would actually do a check in your game.
                state.loggedIn = true;
+               message.action.verb = "successful_login";
+               message.replyOnlyToSender();
             }
 
             // do a check to make sure they are logged in.

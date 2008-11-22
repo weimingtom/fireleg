@@ -16,7 +16,7 @@ import java.net.Socket;
 
 /**
  *
- * @author test
+ * @author Travis Somerville
  */
 public class Connection extends Thread {
 

@@ -1,0 +1,123 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>YourCommands.as</title>
+<link rel="stylesheet" type="text/css" href="../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span>
+<span class="asBracket">{</span>
+    <span class="asReserved">import</span> jags.multigame.NetworkConnection;
+    <span class="asReserved">import</span> jags.multigame.GameTextEvent;
+    <span class="asReserved">import</span> jags.multigame.Config;
+    <span class="asReserved">import</span> flash.events.Event;
+    
+    <span class="asReserved">public</span> <span class="asClass">class</span> YourCommands
+    <span class="asBracket">{</span>
+        <span class="asBracket">[</span><span class="asMetadata">Bindable</span><span class="asBracket">]</span> <span class="asReserved">public</span> <span class="asVar">var</span> gameServer<span class="asOperator">:</span>jags.multigame.NetworkConnection;
+
+        <span class="asComment">// Items related to this demo or your specific game
+</span>        <span class="asBracket">[</span><span class="asMetadata">Bindable</span><span class="asBracket">]</span> <span class="asReserved">public</span> <span class="asVar">var</span> loggedIn<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span>;
+        <span class="asBracket">[</span><span class="asMetadata">Bindable</span><span class="asBracket">]</span> <span class="asReserved">public</span> <span class="asVar">var</span> numberOfPlayers<span class="asOperator">:</span>int;
+        <span class="asBracket">[</span><span class="asMetadata">Bindable</span><span class="asBracket">]</span> <span class="asReserved">public</span> <span class="asVar">var</span> language<span class="asOperator">:</span>String;
+
+        <span class="asComment">// Really important!  Please set a uniqueGameName.
+</span>        <span class="asComment">//
+</span>        <span class="asComment">// Something like &quot;public.johns_racegame.v1_0&quot; would work.
+</span>        <span class="asComment">// Yes, literally put &quot;public.&quot; in front of your name,
+</span>        <span class="asComment">// and then end it with &quot;.versionx_x&quot;.
+</span>        <span class="asComment">//
+</span>        <span class="asComment">// I use those dots to find folders with your java code on
+</span>        <span class="asComment">// the back-end server.  If you&apos;re not writing any custom
+</span>        <span class="asComment">// java code on the back-end, just play along and make up a name.
+</span>        <span class="asComment">//
+</span>        <span class="asComment">// Until you change this, your will get communications from
+</span>        <span class="asComment">// everyone else that didn&apos;t change it... your games will
+</span>        <span class="asComment">// chatter at each other...
+</span>        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> gameName<span class="asOperator">:</span>String <span class="asOperator">=</span> <span class="asString">&quot;public_ftp.login.v1_1&quot;</span>;
+                
+        <span class="asReserved">public</span> <span class="asFunction">function</span> YourCommands<span class="asBracket">()</span> <span class="asBracket">{</span>
+            gameServer <span class="asOperator">=</span> <span class="asReserved">new</span> NetworkConnection<span class="asBracket">(</span>gameName, Config.URL, Config.port, onIDReceived<span class="asBracket">)</span>;
+            registerCommands<span class="asBracket">()</span>;
+            gameServer.connect<span class="asBracket">()</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asDoc">/******************************
+         *  COMMUNICATING TO PLAYERS
+         ******************************/</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> sendMyUpdate<span class="asBracket">(</span>any_data_you_want<span class="asOperator">:</span>String<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            gameServer.sayMyGroup<span class="asBracket">(</span><span class="asString">&quot;your_game_command_1&quot;</span>, any_data_you_want<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>                
+        
+        <span class="asDoc">/**********************************************
+         *  JAGS Server Events and Your Own Commands
+         *********************************************/</span>    
+        <span class="asReserved">public</span> <span class="asFunction">function</span> registerCommands<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asComment">// Some built in server events.  There are more.
+</span>            gameServer.addEventListener<span class="asBracket">(</span>NetworkConnection.AddPlayerEvent, onAddPlayer<span class="asBracket">)</span>;
+            gameServer.addEventListener<span class="asBracket">(</span>NetworkConnection.RemovePlayer, onRemovePlayer<span class="asBracket">)</span>;
+            gameServer.addEventListener<span class="asBracket">(</span>NetworkConnection.GroupNameReceivedEvent, onGroupName<span class="asBracket">)</span>;
+            gameServer.addEventListener<span class="asBracket">(</span>NetworkConnection.StartGameEvent, onStartGame<span class="asBracket">)</span>;
+            
+
+            <span class="asComment">// Your Player Commands
+</span>            gameServer.addEventListener<span class="asBracket">(</span><span class="asString">&quot;your_game_command_1&quot;</span>, onCommand1<span class="asBracket">)</span>;
+            gameServer.addEventListener<span class="asBracket">(</span><span class="asString">&quot;successful_login&quot;</span>, onSuccessfulLogin<span class="asBracket">)</span>;
+            gameServer.addEventListener<span class="asBracket">(</span><span class="asString">&quot;language_chosen&quot;</span>, onLanguageChosen<span class="asBracket">)</span>;            
+            gameServer.addEventListener<span class="asBracket">(</span><span class="asString">&quot;wrong_username&quot;</span>, onWrongUsername<span class="asBracket">)</span>;
+            gameServer.addEventListener<span class="asBracket">(</span><span class="asString">&quot;wrong_password&quot;</span>, onWrongPassword<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asComment">// This happens when our physical socket connection warms up 100%.
+</span>        <span class="asReserved">public</span> <span class="asFunction">function</span> onIDReceived<span class="asBracket">(</span>e<span class="asOperator">:</span>Event<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asTrace">trace</span><span class="asBracket">(</span><span class="asString">&quot;GameServer: Connection IDReceived&quot;</span><span class="asOperator">+</span> gameServer.id<span class="asBracket">)</span>;
+            <span class="asComment">// You may want to let others know you&apos;ve joined the server.
+</span>
+            <span class="asComment">// Or you mayt want to save that notification for when you have logged in
+</span>            <span class="asComment">// through whatever security you put in your game itself on the server side.
+</span>            
+            <span class="asComment">// In this case, we will tell the server to automatically pair us up with
+</span>            <span class="asComment">// a 2 person game.
+</span>            gameServer.autoJoin<span class="asBracket">(</span>2<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> onGroupName<span class="asBracket">(</span>e<span class="asOperator">:</span>Event<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>            
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> onStartGame<span class="asBracket">(</span>e<span class="asOperator">:</span>Event<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>    
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> onAddPlayer<span class="asBracket">(</span>e<span class="asOperator">:</span>Event<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>    
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> onRemovePlayer<span class="asBracket">(</span>e<span class="asOperator">:</span>Event<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+        <span class="asBracket">}</span>
+        
+        <span class="asDoc">/**********************************************
+         * LOGIN FUNCTIONS - or any function you want
+         *********************************************/</span>        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> onSuccessfulLogin<span class="asBracket">(</span>text<span class="asOperator">:</span>GameTextEvent<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            loggedIn <span class="asOperator">=</span> <span class="asReserved">true</span>;
+        <span class="asBracket">}</span>
+
+        <span class="asReserved">public</span> <span class="asFunction">function</span> onLanguageChosen<span class="asBracket">(</span>text<span class="asOperator">:</span>GameTextEvent<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asComment">// parse out the language chosen response from server...
+</span>        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> onWrongUsername<span class="asBracket">(</span>text<span class="asOperator">:</span>GameTextEvent<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> onWrongPassword<span class="asBracket">(</span>text<span class="asOperator">:</span>GameTextEvent<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>    
+        <span class="asBracket">}</span>
+        
+        <span class="asComment">// example of receiving arbitrarily named commands
+</span>        <span class="asReserved">public</span> <span class="asFunction">function</span> onCommand1<span class="asBracket">(</span>text<span class="asOperator">:</span>GameTextEvent<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asComment">// Example of simple String commands
+</span>            <span class="asTrace">trace</span><span class="asBracket">(</span><span class="asString">&quot;From: &quot;</span><span class="asOperator">+</span> text.from <span class="asOperator">+</span><span class="asString">&quot; size =&quot;</span><span class="asOperator">+</span> text.data.length<span class="asBracket">)</span>;
+            <span class="asTrace">trace</span><span class="asBracket">(</span><span class="asString">&quot;Message: &quot;</span><span class="asOperator">+</span> text.data<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>        
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

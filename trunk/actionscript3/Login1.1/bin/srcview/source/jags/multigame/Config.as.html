@@ -1,0 +1,38 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>Config.as</title>
+<link rel="stylesheet" type="text/css" href="../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span> jags.multigame 
+<span class="asBracket">{</span>
+    <span class="asReserved">public</span> <span class="asReserved">final</span> <span class="asClass">class</span> Config
+    <span class="asBracket">{</span>
+        <span class="asComment">// Choose fireleg if you aren&apos;t running your own JAGS server        
+</span>        <span class="asComment">//public static var URL:String = &quot;fireleg.com&quot;;
+</span>        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> URL<span class="asOperator">:</span>String <span class="asOperator">=</span> <span class="asString">&quot;localhost&quot;</span>;
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> port<span class="asOperator">:</span>uint <span class="asOperator">=</span> 81;        
+        
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> framesPerSecond<span class="asOperator">:</span>int <span class="asOperator">=</span> 2;
+        <span class="asComment">// Zero means we synchronize the world every frame.
+</span>        <span class="asComment">// 1,2,3 means we count 1,2,3 frames before synching.
+</span>        <span class="asComment">// This keeps your world looking smooth while the network
+</span>        <span class="asComment">// can chill out a little bit.
+</span>        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> dampenNetSyncBy<span class="asOperator">:</span>int <span class="asOperator">=</span> 4;
+        
+        <span class="asComment">// Set to true to allow other functions related to time
+</span>        <span class="asComment">// Set to false if you don&apos;t want that extra info taking up header space.
+</span>        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> useTimestamps<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">true</span>;
+        
+        <span class="asComment">// Set to true to reject particle messages that arrive late.
+</span>        <span class="asComment">// Set to false if every single particle message is critical.
+</span>        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> rejectLateParticleData<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">true</span>;
+        
+        <span class="asComment">// Meta delimiter used in messaging
+</span>        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asVar">var</span> systemBang<span class="asOperator">:</span>String <span class="asOperator">=</span> <span class="asString">&quot;!&quot;</span>;
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

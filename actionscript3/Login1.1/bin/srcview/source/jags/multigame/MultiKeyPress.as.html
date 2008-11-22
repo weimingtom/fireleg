@@ -1,0 +1,73 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>MultiKeyPress.as</title>
+<link rel="stylesheet" type="text/css" href="../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span> jags.multigame 
+<span class="asBracket">{</span>
+    <span class="asComment">// This class borrowed from Senocular.com
+</span>    <span class="asComment">// http://www.senocular.com/flash/actionscript.php?file=ActionScript_3.0/com/senocular/utils/KeyObject.as
+</span>    <span class="asComment">// 
+</span>    <span class="asComment">// The class name was changed only to better remind me of its purpose.
+</span>        
+    <span class="asReserved">import</span> flash.display.Stage;
+    <span class="asReserved">import</span> flash.events.KeyboardEvent;
+    <span class="asReserved">import</span> flash.ui.Keyboard;
+    <span class="asReserved">import</span> flash.utils.Proxy;
+    <span class="asReserved">import</span> flash.utils.flash_proxy;
+    
+    <span class="asDoc">/**
+     * The MultiKeyPress class recreates functionality of
+     * Key.isDown of ActionScript 1 and 2
+     *
+     * Usage:
+     * var key:MultiKeyPress = new MultiKeyPress(stage);
+     * if (key.isDown(key.LEFT)) { ... }
+     */</span>
+    <span class="asReserved">dynamic</span> <span class="asReserved">public</span> <span class="asClass">class</span> MultiKeyPress <span class="asReserved">extends</span> Proxy <span class="asBracket">{</span>
+        
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asVar">var</span> stage<span class="asOperator">:</span>Object;
+        <span class="asReserved">private</span> <span class="asReserved">static</span> <span class="asVar">var</span> keysDown<span class="asOperator">:</span>Object;
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> MultiKeyPress<span class="asBracket">(</span>stage<span class="asOperator">:</span>Object<span class="asBracket">)</span> <span class="asBracket">{</span>
+            construct<span class="asBracket">(</span>stage<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> construct<span class="asBracket">(</span>stage<span class="asOperator">:</span>Object<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            MultiKeyPress.stage <span class="asOperator">=</span> stage;
+            keysDown <span class="asOperator">=</span> <span class="asReserved">new</span> Object<span class="asBracket">()</span>;
+            stage.addEventListener<span class="asBracket">(</span>KeyboardEvent.KEY_DOWN, keyPressed<span class="asBracket">)</span>;
+            stage.addEventListener<span class="asBracket">(</span>KeyboardEvent.KEY_UP, keyReleased<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+        
+        flash_proxy <span class="asReserved">override</span> <span class="asFunction">function</span> getProperty<span class="asBracket">(</span>name<span class="asOperator">:*</span><span class="asBracket">)</span><span class="asOperator">:*</span> <span class="asBracket">{</span>
+            <span class="asReserved">return</span> <span class="asBracket">(</span>name <span class="asReserved">in</span> Keyboard<span class="asBracket">)</span> <span class="asOperator">?</span> Keyboard<span class="asBracket">[</span>name<span class="asBracket">]</span> <span class="asOperator">:</span> <span class="asOperator">-</span>1;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> isDown<span class="asBracket">(</span>keyCode<span class="asOperator">:</span>uint<span class="asBracket">)</span><span class="asOperator">:</span>Boolean <span class="asBracket">{</span>
+            <span class="asReserved">return</span> Boolean<span class="asBracket">(</span>keyCode <span class="asReserved">in</span> keysDown<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> deconstruct<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            stage.removeEventListener<span class="asBracket">(</span>KeyboardEvent.KEY_DOWN, keyPressed<span class="asBracket">)</span>;
+            stage.removeEventListener<span class="asBracket">(</span>KeyboardEvent.KEY_UP, keyReleased<span class="asBracket">)</span>;
+            keysDown <span class="asOperator">=</span> <span class="asReserved">new</span> Object<span class="asBracket">()</span>;
+            MultiKeyPress.stage <span class="asOperator">=</span> <span class="asReserved">null</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> keyPressed<span class="asBracket">(</span>evt<span class="asOperator">:</span>KeyboardEvent<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            keysDown<span class="asBracket">[</span>evt.keyCode<span class="asBracket">]</span> <span class="asOperator">=</span> <span class="asReserved">true</span>;
+            <span class="asTrace">trace</span><span class="asBracket">(</span><span class="asString">&quot;key DOWN &quot;</span><span class="asOperator">+</span> evt.keyCode<span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asFunction">function</span> keyReleased<span class="asBracket">(</span>evt<span class="asOperator">:</span>KeyboardEvent<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">delete</span> keysDown<span class="asBracket">[</span>evt.keyCode<span class="asBracket">]</span>;
+            <span class="asTrace">trace</span><span class="asBracket">(</span><span class="asString">&quot;key UP &quot;</span><span class="asOperator">+</span> evt.keyCode<span class="asBracket">)</span>;            
+        <span class="asBracket">}</span>
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span></pre></body>
+</html>

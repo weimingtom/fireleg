@@ -1,0 +1,83 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>login.mxml</title>
+<link rel="stylesheet" type="text/css" href="../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="mxmlCdata">&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</span>
+<span class="mxmlComponent">&lt;mx:Application</span> xmlns:mx=&quot;<span class="mxmlString">http://www.adobe.com/2006/mxml</span>&quot; layout=&quot;<span class="mxmlString">absolute</span>&quot;
+    applicationComplete=&quot;onAppComplete<span class="asBracket">()</span>;&quot; viewSourceURL=&quot;<span class="mxmlString">srcview/index.html</span>&quot;<span class="mxmlComponent">&gt;</span>
+    <span class="mxmlTag">&lt;mx:Script&gt;</span>
+        <span class="asOperator">&lt;!</span><span class="asBracket">[</span>CDATA<span class="asBracket">[</span>
+            <span class="asReserved">import</span> mx.core.UIComponent;
+            <span class="asComment">// convenient place to put configuration
+</span>            <span class="asReserved">import</span> jags.multigame.Config;
+            <span class="asReserved">import</span> jags.multigame.MultiKeyPress;    
+            <span class="asReserved">import</span> mx.controls.Alert;        
+
+            <span class="asComment">// Example of how mxml can use .as classes for your game
+</span>            <span class="asBracket">[</span><span class="asMetadata">Bindable</span><span class="asBracket">]</span> <span class="asReserved">public</span> <span class="asVar">var</span> game<span class="asOperator">:</span>Login_Demo; 
+            
+            <span class="asComment">// This is the way to know if more than one key is being held down.
+</span>            <span class="asReserved">private</span> <span class="asVar">var</span> keyboard<span class="asOperator">:</span>MultiKeyPress;
+
+            <span class="asComment">// This is better than using onCreationComplete,
+</span>            <span class="asComment">// as it comes even later and allows everything to be in place.
+</span>            <span class="asReserved">private</span> <span class="asFunction">function</span> onAppComplete<span class="asBracket">()</span><span class="asOperator">:</span><span class="asReserved">void</span>
+            <span class="asBracket">{</span>
+                <span class="asVar">var</span> framesPerSecond<span class="asOperator">:</span>int <span class="asOperator">=</span> jags.multigame.Config.framesPerSecond;
+                <span class="asReserved">this</span>.stage.scaleMode <span class="asOperator">=</span> StageScaleMode.NO_SCALE;
+                <span class="asReserved">this</span>.stage.align <span class="asOperator">=</span> StageAlign.TOP_LEFT;
+                
+                game <span class="asOperator">=</span> <span class="asReserved">new</span> Login_Demo<span class="asBracket">(</span>framesPerSecond, <span class="asReserved">this</span><span class="asBracket">)</span>;
+                keyboard <span class="asOperator">=</span> game.keyboard;
+            <span class="asBracket">}</span>
+            
+            <span class="asReserved">public</span> <span class="asFunction">function</span> handleLogin<span class="asBracket">(</span>username<span class="asOperator">:</span>String, password<span class="asOperator">:</span>String<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+                game.gameCommands.sendMyUpdate<span class="asBracket">(</span><span class="asString">&quot;login_me_in#&quot;</span>
+                    <span class="asOperator">+</span> username <span class="asOperator">+</span><span class="asString">&quot;#&quot;</span><span class="asOperator">+</span> password<span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+            
+            <span class="asReserved">public</span> <span class="asFunction">function</span> show<span class="asBracket">(</span>message<span class="asOperator">:</span>String<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+                Alert.show<span class="asBracket">(</span>message<span class="asBracket">)</span>;
+            <span class="asBracket">}</span>
+        <span class="asBracket">]]</span><span class="asOperator">&gt;</span>
+    <span class="mxmlTag">&lt;/mx:Script&gt;</span>
+    <span class="mxmlComponent">&lt;mx:Canvas</span> id=&quot;<span class="mxmlString">myCanvas</span>&quot; width=&quot;<span class="mxmlString">100%</span>&quot; height=&quot;<span class="mxmlString">100%</span>&quot;<span class="mxmlComponent">&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Label</span> x=&quot;<span class="mxmlString">10</span>&quot; y=&quot;<span class="mxmlString">264</span>&quot; text=&quot;<span class="mxmlString">From Server:</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Text</span> text=&quot;<span class="mxmlString">{</span>game.gameServer.lastMessageIn<span class="mxmlString">}</span>&quot; width=&quot;<span class="mxmlString">491</span>&quot; enabled=&quot;<span class="mxmlString">true</span>&quot; fontFamily=&quot;<span class="mxmlString">Courier New</span>&quot; fontSize=&quot;<span class="mxmlString">14</span>&quot; fontWeight=&quot;<span class="mxmlString">bold</span>&quot; color=&quot;<span class="mxmlString">#00ff00</span>&quot; id=&quot;<span class="mxmlString">security_msg</span>&quot; x=&quot;<span class="mxmlString">10</span>&quot; y=&quot;<span class="mxmlString">290</span>&quot; height=&quot;<span class="mxmlString">63</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        
+        <span class="mxmlComponent">&lt;mx:Label</span> x=&quot;<span class="mxmlString">10</span>&quot; y=&quot;<span class="mxmlString">361</span>&quot; text=&quot;<span class="mxmlString">To Server:</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Text</span> x=&quot;<span class="mxmlString">10</span>&quot; y=&quot;<span class="mxmlString">387</span>&quot; text=&quot;<span class="mxmlString">{</span>game.gameServer.lastMessageOut<span class="mxmlString">}</span>&quot; width=&quot;<span class="mxmlString">491</span>&quot; height=&quot;<span class="mxmlString">61</span>&quot; id=&quot;<span class="mxmlString">last_sent</span>&quot; color=&quot;<span class="mxmlString">#00ffFF</span>&quot; fontSize=&quot;<span class="mxmlString">14</span>&quot; fontFamily=&quot;<span class="mxmlString">Courier New</span>&quot; fontWeight=&quot;<span class="mxmlString">bold</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:CheckBox</span> x=&quot;<span class="mxmlString">24</span>&quot; y=&quot;<span class="mxmlString">94</span>&quot; label=&quot;<span class="mxmlString">Connected Message from Server</span>&quot; id=&quot;<span class="mxmlString">cb_connected</span>&quot; selected=&quot;<span class="mxmlString">{</span>game.gameServer.connected<span class="mxmlString">}</span>&quot; enabled=&quot;<span class="mxmlString">false</span>&quot; fontSize=&quot;<span class="mxmlString">10</span>&quot; color=&quot;<span class="mxmlString">#000000</span>&quot; alpha=&quot;<span class="mxmlString">1.0</span>&quot; fillAlphas=&quot;<span class="mxmlString">[0.0, 0.0]</span>&quot;<span class="mxmlComponent">&gt;</span>
+        <span class="mxmlComponent">&lt;/mx:CheckBox&gt;</span>
+        <span class="mxmlComponent">&lt;mx:CheckBox</span> x=&quot;<span class="mxmlString">24</span>&quot; y=&quot;<span class="mxmlString">120</span>&quot; label=&quot;<span class="mxmlString">Logged In Message from Server</span>&quot; id=&quot;<span class="mxmlString">cb_loggedin</span>&quot; selected=&quot;<span class="mxmlString">{</span>game.gameCommands.loggedIn<span class="mxmlString">}</span>&quot; enabled=&quot;<span class="mxmlString">false</span>&quot;<span class="mxmlComponent">&gt;</span>
+        <span class="mxmlComponent">&lt;/mx:CheckBox&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Button</span> x=&quot;<span class="mxmlString">312.5</span>&quot; y=&quot;<span class="mxmlString">148</span>&quot; label=&quot;<span class="mxmlString">Send Login Command to Server</span>&quot; click=&quot;handleLogin<span class="asBracket">(</span>input_username.text.valueOf<span class="asBracket">()</span>, input_password.text.valueOf<span class="asBracket">())</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:TextInput</span> x=&quot;<span class="mxmlString">312.5</span>&quot; y=&quot;<span class="mxmlString">92</span>&quot; id=&quot;<span class="mxmlString">input_username</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:TextInput</span> x=&quot;<span class="mxmlString">312.5</span>&quot; y=&quot;<span class="mxmlString">118</span>&quot; id=&quot;<span class="mxmlString">input_password</span>&quot; displayAsPassword=&quot;<span class="mxmlString">true</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Label</span> x=&quot;<span class="mxmlString">480.5</span>&quot; y=&quot;<span class="mxmlString">94</span>&quot; text=&quot;<span class="mxmlString">Username</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Label</span> x=&quot;<span class="mxmlString">480.5</span>&quot; y=&quot;<span class="mxmlString">120</span>&quot; text=&quot;<span class="mxmlString">Password</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Label</span> x=&quot;<span class="mxmlString">124</span>&quot; y=&quot;<span class="mxmlString">10</span>&quot; text=&quot;<span class="mxmlString">JAGS1.4m Multiplayer Game Server</span>&quot; fontSize=&quot;<span class="mxmlString">16</span>&quot; fontWeight=&quot;<span class="mxmlString">bold</span>&quot; textAlign=&quot;<span class="mxmlString">center</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Text</span> x=&quot;<span class="mxmlString">10</span>&quot; y=&quot;<span class="mxmlString">228</span>&quot; width=&quot;<span class="mxmlString">510</span>&quot; height=&quot;<span class="mxmlString">42</span>&quot;<span class="mxmlComponent">&gt;</span>
+            <span class="mxmlComponent">&lt;mx:text&gt;</span><span class="mxmlCdata">&lt;![CDATA[</span><span class="mxmlCdata">Here you can see every message to / from the server in its raw format.  The heartbeat messages you see are being sent from the Login_Demo.as game loop.</span><span class="mxmlCdata">]]&gt;</span><span class="mxmlComponent">&lt;/mx:text&gt;</span>
+        <span class="mxmlComponent">&lt;/mx:Text&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Button</span> x=&quot;<span class="mxmlString">239</span>&quot; y=&quot;<span class="mxmlString">98</span>&quot; label=&quot;<span class="mxmlString">Tip</span>&quot; width=&quot;<span class="mxmlString">29</span>&quot; height=&quot;<span class="mxmlString">16</span>&quot; fontAntiAliasType=&quot;<span class="mxmlString">normal</span>&quot; enabled=&quot;<span class="mxmlString">true</span>&quot;<span class="mxmlComponent">&gt;</span>
+            <span class="mxmlComponent">&lt;mx:click&gt;</span>show<span class="asBracket">(</span><span class="asOperator">&amp;</span>quot;The Connected checkmark means we have a permanent 2 way connection <span class="asReserved">to</span> the jags game server.<span class="asOperator">&amp;</span>quot;<span class="asBracket">)</span>;<span class="mxmlComponent">&lt;/mx:click&gt;</span>
+        <span class="mxmlComponent">&lt;/mx:Button&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Button</span> x=&quot;<span class="mxmlString">239</span>&quot; y=&quot;<span class="mxmlString">122</span>&quot; label=&quot;<span class="mxmlString">Tip</span>&quot; width=&quot;<span class="mxmlString">29</span>&quot; height=&quot;<span class="mxmlString">16</span>&quot;<span class="mxmlComponent">&gt;</span>
+            <span class="mxmlComponent">&lt;mx:click&gt;</span><span class="asOperator">&lt;!</span><span class="asBracket">[</span>CDATA<span class="asBracket">[</span>show<span class="asBracket">(</span><span class="asString">&quot;Fill in any username and password.  This will send a request to the custom game on the server, which will send a &apos;successful_login&apos; message back to the Actionscript client&quot;</span><span class="asBracket">)</span>;<span class="asBracket">]]</span><span class="asOperator">&gt;</span><span class="mxmlComponent">&lt;/mx:click&gt;</span>
+        <span class="mxmlComponent">&lt;/mx:Button&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Label</span> x=&quot;<span class="mxmlString">59</span>&quot; y=&quot;<span class="mxmlString">186</span>&quot; text=&quot;<span class="mxmlString">number of players ready</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Label</span> x=&quot;<span class="mxmlString">24</span>&quot; y=&quot;<span class="mxmlString">182</span>&quot; text=&quot;<span class="mxmlString">{</span>game.gameServer.numberOfPlayers<span class="mxmlString">}</span>&quot; fontSize=&quot;<span class="mxmlString">14</span>&quot; fontWeight=&quot;<span class="mxmlString">bold</span>&quot; id=&quot;<span class="mxmlString">lbl_number</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:CheckBox</span> x=&quot;<span class="mxmlString">24</span>&quot; y=&quot;<span class="mxmlString">150</span>&quot; label=&quot;<span class="mxmlString">Game Started</span>&quot; id=&quot;<span class="mxmlString">cb_gamestarted</span>&quot; selected=&quot;<span class="mxmlString">{</span>game.gameServer.gameStarted<span class="mxmlString">}</span>&quot; enabled=&quot;<span class="mxmlString">false</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Label</span> x=&quot;<span class="mxmlString">124</span>&quot; y=&quot;<span class="mxmlString">42</span>&quot; text=&quot;<span class="mxmlString">{</span>game.gameServer.gameName<span class="mxmlString">}</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Label</span> x=&quot;<span class="mxmlString">124</span>&quot; y=&quot;<span class="mxmlString">68</span>&quot; text=&quot;<span class="mxmlString">{</span>game.gameServer.groupName<span class="mxmlString">}</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Label</span> x=&quot;<span class="mxmlString">24</span>&quot; y=&quot;<span class="mxmlString">42</span>&quot; text=&quot;<span class="mxmlString">Game Title:</span>&quot;<span class="mxmlComponent">/&gt;</span>
+        <span class="mxmlComponent">&lt;mx:Label</span> x=&quot;<span class="mxmlString">24</span>&quot; y=&quot;<span class="mxmlString">68</span>&quot; text=&quot;<span class="mxmlString">Group Name:</span>&quot;<span class="mxmlComponent">/&gt;</span>
+    <span class="mxmlComponent">&lt;/mx:Canvas&gt;</span>
+<span class="mxmlComponent">&lt;/mx:Application&gt;</span></pre></body>
+</html>

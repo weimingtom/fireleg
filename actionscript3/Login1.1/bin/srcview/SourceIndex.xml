@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<index>
+	<title>Source of Login1.1</title>
+	<nodes>
+		<node label="jags.multigame" icon="packageIcon" expanded="true">
+			<node label="AMFBase64.as" icon="actionScriptIcon" url="source/jags/multigame/AMFBase64.as.html"/>
+			<node label="Config.as" icon="actionScriptIcon" url="source/jags/multigame/Config.as.html"/>
+			<node label="GameTextEvent.as" icon="actionScriptIcon" url="source/jags/multigame/GameTextEvent.as.html"/>
+			<node label="MultiKeyPress.as" icon="actionScriptIcon" url="source/jags/multigame/MultiKeyPress.as.html"/>
+			<node label="NetworkConnection.as" icon="actionScriptIcon" url="source/jags/multigame/NetworkConnection.as.html"/>
+		</node>
+		<node selected="true" label="login.mxml" icon="mxmlAppIcon" url="source/login.mxml.html"/>
+		<node label="Login_Demo.as" icon="actionScriptIcon" url="source/Login_Demo.as.html"/>
+		<node label="YourCommands.as" icon="actionScriptIcon" url="source/YourCommands.as.html"/>
+	</nodes>
+	<zipfile label="Download source (ZIP, 11K)" url="Login1.1.zip"/>
+	<sdklink label="Download Flex 2 SDK" url="http://www.adobe.com/go/flex2_sdk"/>
+</index>

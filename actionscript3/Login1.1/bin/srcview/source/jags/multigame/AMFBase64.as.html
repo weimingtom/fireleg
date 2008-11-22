@@ -1,0 +1,115 @@
+<!-- saved from url=(0014)about:internet -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>AMFBase64.as</title>
+<link rel="stylesheet" type="text/css" href="../../../SourceStyles.css"/>
+</head>
+
+<body><pre><span class="asPackage">package</span> jags.multigame
+<span class="asBracket">{</span>
+    <span class="asComment">// Credit: code dervied from this thread http://mimswright.com/blog/?p=171#more-171 
+</span>    <span class="asComment">// and Actionscript 3.0 cookbook.
+</span>    
+    <span class="asReserved">import</span> flash.events.TextEvent;
+    <span class="asReserved">import</span> flash.utils.ByteArray;
+    <span class="asReserved">import</span> flash.net.registerClassAlias;
+
+    <span class="asReserved">import</span> mx.utils.Base64Decoder;
+    <span class="asReserved">import</span> mx.utils.Base64Encoder;
+        
+    <span class="asReserved">public</span> <span class="asClass">class</span> AMFBase64
+    <span class="asBracket">{</span>
+        <span class="asReserved">public</span> <span class="asFunction">function</span> AMFBase64<span class="asBracket">()</span> <span class="asBracket">{</span>
+<span class="asComment">//            registerClassAlias(&quot;GameKit.Particle&quot;, Particle);    
+</span>            <span class="asComment">//registerClassAlias(&quot;Robot&quot;, Robot);        
+</span>        <span class="asBracket">}</span>
+        
+        <span class="asComment">// Calls the IExternalizable on each member within the array
+</span>        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asFunction">function</span> arrayWriteExternal<span class="asBracket">(</span>array<span class="asOperator">:</span>Array, output<span class="asOperator">:</span>ByteArray<span class="asBracket">)</span><span class="asOperator">:</span><span class="asReserved">void</span> <span class="asBracket">{</span>
+            <span class="asReserved">if</span> <span class="asBracket">(</span>array <span class="asOperator">==</span> <span class="asReserved">null</span> <span class="asOperator">||</span> array.length <span class="asOperator">==</span> 0<span class="asBracket">)</span> 
+                output.writeObject<span class="asBracket">(</span><span class="asReserved">null</span><span class="asBracket">)</span>;
+            <span class="asReserved">else</span> <span class="asBracket">{</span>
+                <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> array.length; i<span class="asOperator">++</span><span class="asBracket">)</span> <span class="asBracket">{</span>
+                    output.writeObject<span class="asBracket">(</span>array<span class="asBracket">[</span>i<span class="asBracket">]</span>.writeExternal<span class="asBracket">(</span>output<span class="asBracket">))</span>;
+                <span class="asBracket">}</span>
+            <span class="asBracket">}</span>            
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asFunction">function</span> outComplete<span class="asBracket">(</span>obj<span class="asOperator">:*</span>, compress<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span><span class="asBracket">)</span><span class="asOperator">:</span>String <span class="asBracket">{</span>
+            <span class="asVar">var</span> bytes<span class="asOperator">:</span>ByteArray <span class="asOperator">=</span> <span class="asReserved">new</span> ByteArray<span class="asBracket">()</span>;
+            bytes.writeObject<span class="asBracket">(</span>obj<span class="asBracket">)</span>;
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>compress<span class="asBracket">)</span> bytes.compress<span class="asBracket">()</span>;
+            
+            bytes.position <span class="asOperator">=</span> 0;
+            <span class="asVar">var</span> b<span class="asOperator">:</span>Base64Encoder <span class="asOperator">=</span> <span class="asReserved">new</span> Base64Encoder<span class="asBracket">()</span>;
+            b.encodeBytes<span class="asBracket">(</span>bytes, 0, 0<span class="asBracket">)</span>;
+            
+            <span class="asComment">// this last line drains the string,
+</span>            <span class="asComment">// then replaces all the newlines with the # symbol
+</span>            <span class="asComment">// which is not used in base64.
+</span>            <span class="asComment">// this avoids the newline termination, which the socket can&apos;t handle.
+</span>            <span class="asReserved">return</span> b.drain<span class="asBracket">()</span>.split<span class="asBracket">(</span><span class="asString">&quot;\n&quot;</span><span class="asBracket">)</span>.join<span class="asBracket">(</span><span class="asString">&quot;#&quot;</span><span class="asBracket">)</span>;
+        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asFunction">function</span> incomingComplete<span class="asBracket">(</span>obj<span class="asOperator">:</span>String, decompress<span class="asOperator">:</span>Boolean <span class="asOperator">=</span> <span class="asReserved">false</span><span class="asBracket">)</span><span class="asOperator">:*</span>
+        <span class="asBracket">{</span>
+            <span class="asVar">var</span> b<span class="asOperator">:</span>Base64Decoder <span class="asOperator">=</span> <span class="asReserved">new</span> Base64Decoder<span class="asBracket">()</span>;
+            <span class="asComment">// we need to add the newlines back in for the base64 encoder
+</span>            b.decode<span class="asBracket">(</span>obj.split<span class="asBracket">(</span><span class="asString">&quot;#&quot;</span><span class="asBracket">)</span>.join<span class="asBracket">(</span><span class="asString">&quot;\n&quot;</span><span class="asBracket">))</span>;
+            <span class="asVar">var</span> bytes<span class="asOperator">:</span>ByteArray <span class="asOperator">=</span> b.drain<span class="asBracket">()</span>;
+            
+            <span class="asReserved">if</span> <span class="asBracket">(</span>decompress<span class="asBracket">)</span> bytes.uncompress<span class="asBracket">()</span>;
+            
+            bytes.position <span class="asOperator">=</span> 0;            
+            <span class="asVar">var</span> part<span class="asOperator">:*</span> <span class="asOperator">=</span> bytes.readObject<span class="asBracket">()</span>;
+            
+            <span class="asReserved">return</span> part;
+        <span class="asBracket">}</span>        
+        
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asFunction">function</span> outAMF<span class="asBracket">(</span>obj<span class="asOperator">:*</span><span class="asBracket">)</span><span class="asOperator">:</span>String <span class="asBracket">{</span>
+            <span class="asVar">var</span> bytes<span class="asOperator">:</span>ByteArray <span class="asOperator">=</span> <span class="asReserved">new</span> ByteArray<span class="asBracket">()</span>;
+            bytes.writeObject<span class="asBracket">(</span>obj<span class="asBracket">)</span>;
+
+            <span class="asComment">//if (compress) bytes.compress();
+</span>
+            bytes.position <span class="asOperator">=</span> 0;
+            
+            <span class="asReserved">return</span> bytes.toString<span class="asBracket">()</span>.split<span class="asBracket">(</span><span class="asString">&quot;\n&quot;</span><span class="asBracket">)</span>.join<span class="asBracket">(</span><span class="asString">&quot;#~#&quot;</span><span class="asBracket">)</span>.split<span class="asBracket">(</span><span class="asString">&quot;\u0000&quot;</span><span class="asBracket">)</span>.join<span class="asBracket">(</span><span class="asString">&quot;!null!&quot;</span><span class="asBracket">)</span>;
+            <span class="asComment">//return bytes.toString();
+</span>        <span class="asBracket">}</span>
+        
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asFunction">function</span> incomingAMF<span class="asBracket">(</span>obj<span class="asOperator">:</span>String<span class="asBracket">)</span><span class="asOperator">:*</span>
+        <span class="asBracket">{</span>
+            <span class="asComment">// we need to add the newlines back in.
+</span>            obj <span class="asOperator">=</span> obj.split<span class="asBracket">(</span><span class="asString">&quot;!null!&quot;</span><span class="asBracket">)</span>.join<span class="asBracket">(</span><span class="asString">&quot;\u0000&quot;</span><span class="asBracket">)</span>.split<span class="asBracket">(</span><span class="asString">&quot;#~#&quot;</span><span class="asBracket">)</span>.join<span class="asBracket">(</span><span class="asString">&quot;\n&quot;</span><span class="asBracket">)</span>;
+            <span class="asVar">var</span> bytes<span class="asOperator">:</span>ByteArray <span class="asOperator">=</span> fromString<span class="asBracket">(</span>obj<span class="asBracket">)</span>;
+
+        <span class="asComment">//    if (decompress) bytes.uncompress();
+</span>
+            bytes.position <span class="asOperator">=</span> 0;            
+            <span class="asVar">var</span> part<span class="asOperator">:*</span> <span class="asOperator">=</span> bytes.readObject<span class="asBracket">()</span>;
+            
+            <span class="asReserved">return</span> part;
+        <span class="asBracket">}</span>        
+
+        <span class="asReserved">public</span> <span class="asReserved">static</span> <span class="asFunction">function</span> fromString<span class="asBracket">(</span>s<span class="asOperator">:</span>String<span class="asBracket">)</span><span class="asOperator">:</span>ByteArray <span class="asBracket">{</span>
+            <span class="asComment">//trace(&quot;OBJ FROM = &quot;+ s);
+</span>            
+            <span class="asVar">var</span> a<span class="asOperator">:</span>ByteArray <span class="asOperator">=</span> <span class="asReserved">new</span> ByteArray<span class="asBracket">()</span>;
+            a.length <span class="asOperator">=</span> s.length;
+            <span class="asReserved">for</span> <span class="asBracket">(</span><span class="asVar">var</span> i<span class="asOperator">:</span>int <span class="asOperator">=</span> 0; i <span class="asOperator">&lt;</span> s.length; <span class="asOperator">++</span>i<span class="asBracket">)</span> <span class="asBracket">{</span>
+                a<span class="asBracket">[</span>i<span class="asBracket">]</span> <span class="asOperator">=</span> s.charCodeAt<span class="asBracket">(</span>i<span class="asBracket">)</span>;
+                <span class="asComment">//if (a[i] == 0) trace(&quot;NULL located at &quot;+ i);
+</span>                <span class="asComment">//trace(a[i] +&quot; == &quot;+ String.fromCharCode(a[i]));  
+</span>            <span class="asBracket">}</span>
+            
+            <span class="asReserved">return</span> a;
+        <span class="asBracket">}</span>        
+        
+    <span class="asBracket">}</span>
+<span class="asBracket">}</span>
+</pre></body>
+</html>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" layout="absolute"
+    applicationComplete="onAppComplete();" viewSourceURL="srcview/index.html">
+    <mx:Script>
+        <![CDATA[
+        	import mx.core.UIComponent;
+        	// convenient place to put configuration
+			import jags.multigame.Config;
+			import jags.multigame.MultiKeyPress;	
+			import mx.controls.Alert;		
+
+			// Example of how mxml can use .as classes for your game
+			[Bindable] public var game:Login_Demo; 
+			
+			// This is the way to know if more than one key is being held down.
+			private var keyboard:MultiKeyPress;
+
+			// This is better than using onCreationComplete,
+			// as it comes even later and allows everything to be in place.
+            private function onAppComplete():void
+            {
+				var framesPerSecond:int = jags.multigame.Config.framesPerSecond;
+				this.stage.scaleMode = StageScaleMode.NO_SCALE;
+				this.stage.align = StageAlign.TOP_LEFT;
+				
+				game = new Login_Demo(framesPerSecond, this);
+				keyboard = game.keyboard;
+            }
+            
+            public function handleLogin(username:String, password:String):void {
+            	game.gameCommands.sendMyUpdate("login_me_in#"
+            		+ username +"#"+ password);
+            }
+            
+            public function show(message:String):void {
+            	Alert.show(message);
+            }
+        ]]>
+    </mx:Script>
+    <mx:Canvas id="myCanvas" width="100%" height="100%">
+		<mx:Label x="10" y="264" text="From Server:"/>
+		<mx:Text text="{game.gameServer.lastMessageIn}" width="491" enabled="true" fontFamily="Courier New" fontSize="14" fontWeight="bold" color="#00ff00" id="security_msg" x="10" y="290" height="63"/>
+		
+		<mx:Label x="10" y="361" text="To Server:"/>
+		<mx:Text x="10" y="387" text="{game.gameServer.lastMessageOut}" width="491" height="61" id="last_sent" color="#00ffFF" fontSize="14" fontFamily="Courier New" fontWeight="bold"/>
+		<mx:CheckBox x="24" y="94" label="Connected Message from Server" id="cb_connected" selected="{game.gameServer.connected}" enabled="false" fontSize="10" color="#000000" alpha="1.0" fillAlphas="[0.0, 0.0]">
+		</mx:CheckBox>
+		<mx:CheckBox x="24" y="120" label="Logged In Message from Server" id="cb_loggedin" selected="{game.gameCommands.loggedIn}" enabled="false">
+		</mx:CheckBox>
+		<mx:Button x="312.5" y="148" label="Send Login Command to Server" click="handleLogin(input_username.text.valueOf(), input_password.text.valueOf())"/>
+		<mx:TextInput x="312.5" y="92" id="input_username"/>
+		<mx:TextInput x="312.5" y="118" id="input_password" displayAsPassword="true"/>
+		<mx:Label x="480.5" y="94" text="Username"/>
+		<mx:Label x="480.5" y="120" text="Password"/>
+		<mx:Label x="124" y="10" text="JAGS1.4m Multiplayer Game Server" fontSize="16" fontWeight="bold" textAlign="center"/>
+		<mx:Text x="10" y="228" width="510" height="42">
+			<mx:text><![CDATA[Here you can see every message to / from the server in its raw format.  The heartbeat messages you see are being sent from the Login_Demo.as game loop.]]></mx:text>
+		</mx:Text>
+		<mx:Button x="239" y="98" label="Tip" width="29" height="16" fontAntiAliasType="normal" enabled="true">
+			<mx:click>show(&quot;The Connected checkmark means we have a permanent 2 way connection to the jags game server.&quot;);</mx:click>
+		</mx:Button>
+		<mx:Button x="239" y="122" label="Tip" width="29" height="16">
+			<mx:click><![CDATA[show("Fill in any username and password.  This will send a request to the custom game on the server, which will send a 'successful_login' message back to the Actionscript client");]]></mx:click>
+		</mx:Button>
+		<mx:Label x="59" y="186" text="number of players ready"/>
+		<mx:Label x="24" y="182" text="{game.gameServer.numberOfPlayers}" fontSize="14" fontWeight="bold" id="lbl_number"/>
+		<mx:CheckBox x="24" y="150" label="Game Started" id="cb_gamestarted" selected="{game.gameServer.gameStarted}" enabled="false"/>
+		<mx:Label x="124" y="42" text="{game.gameServer.gameName}"/>
+		<mx:Label x="124" y="68" text="{game.gameServer.groupName}"/>
+		<mx:Label x="24" y="42" text="Game Title:"/>
+		<mx:Label x="24" y="68" text="Group Name:"/>
+    </mx:Canvas>
+</mx:Application>
+			
